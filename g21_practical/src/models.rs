@@ -90,6 +90,13 @@ pub struct BugAssignment {
     pub user_id: Uuid, // The ID of the user to whom the bug is assigned
 }
 
+// Alternative BugAssignment struct that accepts string UUIDs from frontend
+#[derive(Serialize, Deserialize, Debug)]
+pub struct BugAssignmentRequest { 
+    pub bug_id: String, // String representation of UUID from frontend
+    pub user_id: String, // String representation of UUID from frontend
+}
+
 // Simple user struct for dropdowns (no password needed)
 #[derive(Serialize, Deserialize, Debug, FromRow)]
 pub struct SimpleUser {

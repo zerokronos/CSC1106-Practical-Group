@@ -35,24 +35,40 @@ the database implemented in Rust as well as a frontend using Tera template with 
 
 ## Features
 -Authentication Middleware with JWT Token
+    AuthMiddleware in auth.rs is used for access control for all endpoints besides the GET requests
+    to ensure any sort of modification requires user authentication.
 
 -Hashing of password with Salt via Bcrypt
+    The bcrypt crate is implemented to ensure passwords are stored securely with hashing and a fixed salt.
 
 -Front end with Tera Template
+    
 
 -SQLite with in-memory database.
     For our SQLite Database, we used an in-memory database to store our tables and data.
     schema.sql is called in db.rs to generate the tables (users, projectRecord, bugReport, etc.)
     The tables are then populated with some data for testing.
 
-    Key contrains of the realations are
-    Each projectReport has a user (identified with user_id) that created it
-    Each bugReport has a project (identified with project_id), user (identified with reported_by) that reported it, and a user (identified with fixed_by) that fixed it.
+    Key contraints of the relations are:
+    -Each projectReport has a user (identified with user_id) that created it.
+    -Each bugReport has a project (identified with project_id), user (identified with reported_by) that reported it, and a user (identified with fixed_by) that fixed it.
     
 -Error Handling with error.rs
+    Custom error types like Database and NotFound error are used to classify and handle a variety of potential errors in the endpoints.
 
 -CRUD
+    create_bug takes in title, description, project_name, and severity. It automatically checks the projectname with the database and binds respective fields.
+    It returns the newly created BugReport as a json.
 
+    get_bugs takes in optional fields of is_fixed, severity and project_name as queries. It will return all selected BugReports based on the filters as a JSON.
+
+    get_bug_by_id takes in a bug_id in its path and returns all fields of the BugReport from the database in a JSON.
+
+    update_bug_details takes in optional fields of is_fixed, severity, description and fixed_by and updates the respective fields of the bug_id which is passed
+    in through the path.
+
+    delete_bug deletes a BugReport with the assigned bug_id passed in through the path
+    
 ## API Routes
 **POST** `/login` - login as a user
 **GET** `/projets` - Get all projects as JSON
@@ -63,8 +79,8 @@ the database implemented in Rust as well as a frontend using Tera template with 
 **POST** `/bugs/assign` - Update the fixed by field(require Authentication)
 
 ## CRUD API for BugReport
-**POST** `/bugs/new` - Create a new BugReport (Admin Access required)
+**POST** `/bugs/new` - Create a new BugReport (require Authentication)
 **GET** `/bugs` - List all BugReport's as a JSON
 **GET** `/bugs/:id` - Retrive a specific BugReport by bug_id as JSON
-**PATCH** `/bugs/:id` - Update BugReport details via JSON with optional fields, returns updated record 
+**PATCH** `/bugs/:id` - Update BugReport details via JSON with optional fields, returns updated record (require Authentication)
 **DELETE** `/bugs/:id` - Delete a BugReport by bug_id (require Authentication)
