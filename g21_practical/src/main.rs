@@ -29,9 +29,10 @@ async fn main() -> std::io::Result<()> {
             // Share the database pool across different parts of the application using application data.
             .app_data(web::Data::new(db_pool.clone()))
             // Configure application routes using the `config` function from the `handlers` module.
-            .configure(handlers::config)
+            //.configure(handlers::config)
     })
     // Bind the server to listen on the local machine at port 8080.
     .bind(("127.0.0.1", 8080))?
     .run() // Start the server.
     .await // Await the completion of the server run (this runs indefinitely until shutdown).
+}

@@ -775,6 +775,7 @@ dependencies = [
  "bcrypt",
  "chrono",
  "dotenv",
+ "hex",
  "jsonwebtoken",
  "serde",
  "serde_json",
