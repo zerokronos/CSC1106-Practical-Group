@@ -27,30 +27,29 @@ the database implemented in Rust as well as a frontend using Tera template with 
 
 ### Setup Instructions
    cd g21_practical
-   cargo build
    cargo run
 
 ## Usage of Application
 1. **Web Interface**:   Open 'http://localhost:8080/bugs/assign' or bound ip address and port.
-2. **CLI API Route**:       Open curl/commands to use the respective commands to test the API Routes.     
+2. **CLI API Route**:   Open curl/commands to view the respective commands to test the API Routes.     
 
 ## Features
 -Authentication Middleware with JWT Token
 
--Hashing of password with Salt
+-Hashing of password with Salt via Bcrypt
 
 -Front end with Tera Template
 
 -SQLite with in-memory database.
-    For our SQLite Database we used an in memory database to store our tables and data.
-    schema.sql is called in db.rs to generate the tables (users, projectRecord, BugReport)
-    The tables are then populated with some data for tessting.
+    For our SQLite Database, we used an in-memory database to store our tables and data.
+    schema.sql is called in db.rs to generate the tables (users, projectRecord, bugReport, etc.)
+    The tables are then populated with some data for testing.
 
     Key contrains of the realations are
     Each projectReport has a user (identified with user_id) that created it
     Each bugReport has a project (identified with project_id), user (identified with reported_by) that reported it, and a user (identified with fixed_by) that fixed it.
     
--Error Handling
+-Error Handling with error.rs
 
 -CRUD
 
