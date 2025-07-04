@@ -35,21 +35,26 @@ the database implemented in Rust as well as a frontend using Tera template with 
 
 ## Features
 -Authentication Middleware with JWT Token
+    AuthMiddleware in auth.rs is used for access control for all endpoints besides the GET requests
+    to ensure any sort of modification requires user authentication.
 
 -Hashing of password with Salt via Bcrypt
+    The bcrypt crate is implemented to ensure passwords are stored securely with hashing and a fixed salt.
 
 -Front end with Tera Template
+    
 
 -SQLite with in-memory database.
     For our SQLite Database, we used an in-memory database to store our tables and data.
     schema.sql is called in db.rs to generate the tables (users, projectRecord, bugReport, etc.)
     The tables are then populated with some data for testing.
 
-    Key constrains of the ralations are
-    Each projectReport has a user (identified with user_id) that created it
-    Each bugReport has a project (identified with project_id), user (identified with reported_by) that reported it, and a user (identified with fixed_by) that fixed it.
+    Key contraints of the relations are:
+    -Each projectReport has a user (identified with user_id) that created it.
+    -Each bugReport has a project (identified with project_id), user (identified with reported_by) that reported it, and a user (identified with fixed_by) that fixed it.
     
 -Error Handling with error.rs
+    Custom error types like Database and NotFound error are used to classify and handle a variety of potential errors in the endpoints.
 
 -CRUD
     create_bug takes in title, description, project_name, and severity. It automatically checks the projectname with the database and binds respective fields.
