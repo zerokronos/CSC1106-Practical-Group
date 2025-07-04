@@ -8,18 +8,24 @@ use sqlx::SqlitePool;
 use uuid::Uuid;
 
 // Models and authentication functionality needed for user, stock, and transaction handling.
-use crate::models::{User, Stock, Transaction};
+use crate::models::{};
 use crate::auth;
 
 // Define a function to configure the service, setting up the routes available in this web application.
 pub fn config(cfg: &mut web::ServiceConfig) {
-    // Configure the service to handle specific HTTP routes and methods.
-    // Each route is associated with a specific handler function that processes requests to that route.
-    cfg.service(web::resource("/login").route(web::post().to(login)))// POST /login to `login`
-       .service(web::resource("/buy").route(web::post().to(buy_stock))) // POST /buy to `buy_stock`
-       .service(web::resource("/sell").route(web::post().to(sell_stock))) // POST /sell to `sell_stock`
-       .service(web::resource("/transactions").route(web::get().to(get_transactions))); // GET /transactions to `get_transactions`
+    cfg.service(web::resource("/login").route(web::post().to(login_function))) // POST /login 
+       .service(web::resource("/projects").route(web::get().to(get_projects))) //GET /projects
+       .service(web::resource("/projects").route(web::post().to(add_project))) //POST /projects
+        web::scope("/bugs")
+            .route("", web::get().to(get_bugs)) // GET /bugs
+            .route("/{id}", web::get().to(get_bug_by_id)) // GET /bugs/{id}
+            .route("/new", web::post().to(create_bug)) // POST /bugs/new
+            .route("/assign", web::post().to(assign_bug)) // POST /bugs/assign
+            .route("/{id}", web::patch().to(update_bug_details)) // PATCH /bugs/{id}
+            .route("/{id}", web::delete().to(delete_bug)) //delete /bugs/{id}
+        
 }
+
 
 // Asynchronous function for user login, expected to receive a JSON payload corresponding to a `User` object.
 // Returns a responder, encapsulating an HTTP response.
