@@ -45,9 +45,20 @@ async fn login_function(pool: web::Data<SqlitePool>, body: web::Json<User>) -> i
 
 // Asynchronous function for handling stock purchase requests.
 // Simply responds to the request with a confirmation message.
-async fn get_projects(_pool: web::Data<SqlitePool>, _body: web::Json<BugReport>) -> impl Responder {
-    // Respond with a 200 OK status, indicating the buy request was processed.
-    HttpResponse::Ok().body("Buy request processed")
+async fn get_projects(_pool: web::Data<SqlitePool>) -> impl Responder {
+    let project = match sqlx::query_as::<_, Project>(
+        "SELECT id, project_name, project_description, created_at, user_id  FROM projectRecords"
+    )
+    .fetch_all(_pool.get_ref())
+    .await
+    {
+        Ok(projects) => projects,
+        Err(e) => {
+            eprintln!("Project query error: {:?}", e);
+            return HttpResponse::InternalServerError().finish();
+        }
+    };
+    HttpResponse::Ok().json(project)
 }
 
 
