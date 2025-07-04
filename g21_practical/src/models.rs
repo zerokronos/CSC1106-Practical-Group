@@ -38,7 +38,7 @@ pub struct BugReport {
     pub title: String,          // The title of the bug
     pub description: String,   // The description of the bug
     pub reported_by: Uuid,       // The ID of the user that reported the bug.
-    pub fixed_by: Uuid,         // The ID of the user that fixed the bug.
+    pub fixed_by: Option<Uuid>,         // The ID of the user that fixed the bug.
     pub severity: String,    // The severity of the bug
     pub is_fixed: bool, // Indicates whether the bug has been fixed or not.
     pub created_at: String, // Timestamp of when the bug was created
@@ -62,4 +62,19 @@ pub struct ProjectRecord {
     pub project_description: String,
     pub created_at: String, // Timestamp of when the project was created
     pub user_id: Uuid, // The ID of the user that created the project
+}
+
+#[derive(Serialize, Deserialize, Debug, FromRow)]
+pub struct BugFilter {
+    pub is_fixed: Option<bool>,     
+    pub severity: Option<String>,
+    pub project_name: Option<String>,  
+}
+
+#[derive(Serialize, Deserialize, Debug, FromRow)]
+pub struct UpdateBugReport {
+    pub is_fixed: Option<bool>,     
+    pub severity: Option<String>,
+    pub description: Option<String>,
+    pub fixed_by: Option<String>,
 }
