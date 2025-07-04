@@ -35,3 +35,4 @@ async fn main() -> std::io::Result<()> {
     .bind(("127.0.0.1", 8080))?
     .run() // Start the server.
     .await // Await the completion of the server run (this runs indefinitely until shutdown).
+}
