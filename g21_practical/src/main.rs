@@ -6,7 +6,7 @@
 use actix_web::{web, App, HttpServer, HttpResponse, Responder};
 use dotenv::dotenv;
 use std::env;
-
+use std::sync::{Arc, RwLock};
 // Declare internal modules used in this application.
 mod handlers; // Handles HTTP request routing and response.
 mod models;   // Defines data structures used across the application.
@@ -14,6 +14,9 @@ mod auth;     // Handles authentication logic and utilities.
 mod db;       // Contains database initialization and interaction functions.
 mod error;    // Handles error-handling.
 
+pub struct AppState {
+    pub projects: Arc<RwLock<Vec<models::ProjectRecord>>>,
+}
 // The `main` function is the application's entry point, running within the `actix_web` runtime.
 // It returns a `Result` that can indicate I/O operations' success or failure.
 #[actix_web::main]
@@ -23,6 +26,17 @@ async fn main() -> std::io::Result<()> {
 
     // Initialize the database connection pool asynchronously and store it in `db_pool`.
     let db_pool = db::init_db().await;
+    
+    let initial_projects = sqlx::query_as::<_, models::ProjectRecord>(
+        "SELECT id, project_name, project_description, created_at, user_id FROM projectRecord"
+    )
+    .fetch_all(&db_pool)
+    .await
+    .expect("Failed to load initial projects");
+
+     let app_state = web::Data::new(AppState {
+        projects: Arc::new(RwLock::new(initial_projects)),
+    });
 
     // Configure and run the HTTP server.
     HttpServer::new(move || {
