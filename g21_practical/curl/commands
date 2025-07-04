@@ -18,8 +18,6 @@ curl -X POST http://127.0.0.1:8080/bugs/new -H "Content-Type: application/json" 
 
 curl -X POST http://localhost:8080/login -H "Content-Type: application/json" -d "{\"username\": \"nonexistent\",\"password\": \"password123\"}"
 
-7. Test creating a new bug report
-curl -i -X POST http://127.0.0.1:8080/bugs/new -H "Content-Type: application/json" -d "{\"title\":\"Bug Report 2\", \"description\":\"There is a big bug in compilation\", \"reported_by\":\"admin\",\"project_name\":\"Project A\", \"severity\":\"high\"}"
 
 8. Test getting all bug reports with optional fields
 curl -i -X GET http://127.0.0.1:8080/bugs
@@ -37,3 +35,6 @@ curl http://localhost:8080/bugs/ReplaceWithValidBugId
 
 10. Update a bug report with option fields
 curl -X PATCH http://localhost:8080/bugs/ReplaceWithValidBugId -H "Content-Type: application/json" -d "{\"is_fixed\": true,\"fixed_by\": \"normal_user\",\"description\":\"Bug has been resolved.\",\"severity\":\"low\"}"
+
+
+eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJlMzQ5MzUxZi0wZjVjLTQ4YWItYjFmNS0yYjViMWZjZWFjMDEiLCJleHAiOjE3NTE2MzExOTJ9.imH-OdabIUbBU3YYK1mdJK13G14PnUpHiWEQMSisig4
