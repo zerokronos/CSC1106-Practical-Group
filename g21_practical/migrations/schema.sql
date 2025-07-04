@@ -9,14 +9,14 @@ CREATE TABLE users (
 CREATE TABLE projectRecords (
     id BLOB PRIMARY KEY,
     user_id BLOB NOT NULL,
-    projectName TEXT,
-    projectDescription TEXT,
+    project_name TEXT,
+    project_description TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(user_id) REFERENCES users(id)
 );
 
 -- Create bugsReports table
-CREATE TABLE bugsReports (
+CREATE TABLE bugReports (
     id BLOB PRIMARY KEY,
     title TEXT NOT NULL UNIQUE,
     description TEXT NOT NULL,
