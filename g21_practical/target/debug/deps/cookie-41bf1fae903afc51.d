@@ -1,0 +1,11 @@
+C:\Users\travi\Documents\GitHub\CSC1106-Practical-Group\g21_practical\target\debug\deps\libcookie-41bf1fae903afc51.rmeta: C:\Users\travi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\cookie-0.16.2\src\lib.rs C:\Users\travi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\cookie-0.16.2\src\builder.rs C:\Users\travi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\cookie-0.16.2\src\parse.rs C:\Users\travi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\cookie-0.16.2\src\jar.rs C:\Users\travi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\cookie-0.16.2\src\delta.rs C:\Users\travi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\cookie-0.16.2\src\draft.rs C:\Users\travi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\cookie-0.16.2\src\expiration.rs
+
+C:\Users\travi\Documents\GitHub\CSC1106-Practical-Group\g21_practical\target\debug\deps\cookie-41bf1fae903afc51.d: C:\Users\travi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\cookie-0.16.2\src\lib.rs C:\Users\travi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\cookie-0.16.2\src\builder.rs C:\Users\travi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\cookie-0.16.2\src\parse.rs C:\Users\travi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\cookie-0.16.2\src\jar.rs C:\Users\travi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\cookie-0.16.2\src\delta.rs C:\Users\travi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\cookie-0.16.2\src\draft.rs C:\Users\travi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\cookie-0.16.2\src\expiration.rs
+
+C:\Users\travi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\cookie-0.16.2\src\lib.rs:
+C:\Users\travi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\cookie-0.16.2\src\builder.rs:
+C:\Users\travi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\cookie-0.16.2\src\parse.rs:
+C:\Users\travi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\cookie-0.16.2\src\jar.rs:
+C:\Users\travi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\cookie-0.16.2\src\delta.rs:
+C:\Users\travi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\cookie-0.16.2\src\draft.rs:
+C:\Users\travi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\cookie-0.16.2\src\expiration.rs:
