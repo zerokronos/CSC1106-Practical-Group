@@ -27,7 +27,7 @@ pub struct LoginRequest {
 pub struct LoginResponse {
     pub status: String,
     pub message: String,
-    pub token: String,
+    pub token: Option<String>,
 }
 
 // Define the `BugReport` struct to represent a bug report.
@@ -56,7 +56,7 @@ pub struct CreateBug {
 
 
 #[derive(Serialize, Deserialize, Debug, FromRow)]
-pub struct Project {
+pub struct ProjectRecord {
     pub id: Uuid,
     pub project_name: String,
     pub project_description: String,

@@ -1,0 +1,8 @@
+1. Test successful login
+curl -X POST http://localhost:8080/login -H "Content-Type: application/json" -d "{\"username\": \"admin\",\"password\": \"admin123\"}"
+
+2. Test failed login (wrong password)
+curl -X POST http://localhost:8080/login -H "Content-Type: application/json" -d "{\"username\": \"admin\",\"password\": \"wrongpassword\"}"
+
+3. Test failed login (user non-existent)
+curl -X POST http://localhost:8080/login -H "Content-Type: application/json" -d "{\"username\": \"nonexistent\",\"password\": \"password123\"}"

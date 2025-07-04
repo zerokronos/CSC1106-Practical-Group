@@ -8,7 +8,7 @@ use sqlx::SqlitePool;
 use uuid::Uuid;
 
 // Models and authentication functionality needed for user, stock, and transaction handling.
-use crate::models::{User, BugReport, CreateBug, Project};
+use crate::models::{User, BugReport, LoginRequest, LoginResponse, CreateBug, ProjectRecord};
 use crate::auth;
 
 // Define a function to configure the service, setting up the routes available in this web application.
@@ -25,18 +25,6 @@ pub fn config(cfg: &mut web::ServiceConfig) {
                 .route("/{id}", web::patch().to(update_bug_details)) // PATCH /bugs/{id}
                 .route("/{id}", web::delete().to(delete_bug)) //delete /bugs/{id}
        );
-}
-
-// Hash password with salt function
-fn hash_with_salt(password: &str, salt: &str) -> Result<String, bcrypt::BcryptError> {
-    let salted_password = format!("{}{}", salt, password);
-    hash(salted_password, DEFAULT_COST)
-}
-
-// Function to verify password with salt
-fn verify_with_salt(password: &str, salt: &str, hash: &str) -> Result<bool, bcrypt::BcryptError> {
-    let salted_password = format!("{}{}", salt, password);
-    verify(salted_password, hash)
 }
 
 // Asynchronous function for user login, expected to receive a JSON payload corresponding to a `User` object.
@@ -56,7 +44,7 @@ async fn login_function(
     match user {
         Ok(Some(user)) => {
             // Verify password
-            match verify_with_salt(&body.password, salt, &user.hashed_password) {
+            match auth::verify_with_salt(&body.password, salt, &user.hashed_password) {
                 Ok(true) => {
                     // Password correct, create token
                     let token = auth::create_token(Uuid::new_v4());
@@ -154,7 +142,7 @@ async fn create_bug(_pool: web::Data<SqlitePool>, _body: web::Json<CreateBug>) -
         }
     };
 
-    let project = match sqlx::query_as::<_, Project>(
+    let project = match sqlx::query_as::<_, ProjectRecord>(
         "SELECT id, project_name, project_description, created_at, user_id  FROM projectRecord WHERE project_name = ?"
     )
     .bind(&_body.project_name)

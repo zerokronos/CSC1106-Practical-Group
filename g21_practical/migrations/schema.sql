@@ -5,7 +5,7 @@ CREATE TABLE users (
     hashed_password TEXT NOT NULL
 );
 
--- Create projectRecords table
+-- Create projectRecord table
 CREATE TABLE projectRecord (
     id BLOB PRIMARY KEY,
     user_id BLOB NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE bugReport (
     severity TEXT NOT NULL,
     is_fixed BOOLEAN DEFAULT FALSE,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(project_id) REFERENCES projectRecords(id),
+    FOREIGN KEY(project_id) REFERENCES projectRecord(id),
     FOREIGN KEY(reported_by) REFERENCES users(id),
     FOREIGN KEY(fixed_by) REFERENCES users(id)
 );

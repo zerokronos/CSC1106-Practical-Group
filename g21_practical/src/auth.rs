@@ -4,6 +4,7 @@ use jsonwebtoken::{encode, decode, Header, Validation, EncodingKey, DecodingKey}
 use serde::{Serialize, Deserialize};
 use std::env;
 use uuid::Uuid;
+use bcrypt::{hash, verify, DEFAULT_COST};
 
 // Define a struct called `Claims` that will hold the data to be encoded into the JWT.
 // This struct derives `Serialize` and `Deserialize` traits to facilitate JSON conversion.
@@ -48,4 +49,16 @@ pub fn validate_token(token: &str) -> bool {
         &Validation::default(),               // Use default validation parameters.
     )
     .is_ok() // Check if the decoding operation was successful.
+}
+
+// Hash password with salt
+pub fn hash_with_salt(password: &str, salt: &str) -> Result<String, bcrypt::BcryptError> {
+    let salted_password = format!("{}{}", salt, password);
+    hash(salted_password, DEFAULT_COST)
+}
+
+// Verify password with salt
+pub fn verify_with_salt(password: &str, salt: &str, hash: &str) -> Result<bool, bcrypt::BcryptError> {
+    let salted_password = format!("{}{}", salt, password);
+    verify(salted_password, hash)
 }
