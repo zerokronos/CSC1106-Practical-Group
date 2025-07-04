@@ -3,40 +3,55 @@
 // Import `uuid` for generating and handling universally unique identifiers (UUIDs).
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use sqlx::FromRow;
 
 // Define the `User` struct to represent a user in the application.
 // This struct derives `Serialize` and `Deserialize` so it can be easily converted to and from JSON and other data formats.
 // It also derives `Debug` to allow for formatted output, useful for debugging.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, FromRow)]
 pub struct User {
     pub id: Uuid,              // Unique identifier for the user.
     pub username: String,      // Username of the user.
     pub hashed_password: String, // Password of the user stored in a hashed form for security.
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize, Debug, FromRow)]
 pub struct Login {
     pub username: String, // Username of the user
     pub password: String, // Pasword of the user that key it in
 }
 
 // Define the `BugReport` struct to represent a bug report.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, FromRow)]
 pub struct BugReport {
     pub id: Uuid,                 // Unique identifier of the bug.
-    pub reported_by: Uuid,       // The ID of the user that reported the bug.
-    pub fixed_by: Uuid,         // The ID of the user that fixed the bug.
+    pub project_id: Uuid, // The ID of the project that the bug belongs to.
     pub title: String,          // The title of the bug
     pub description: String,   // The description of the bug
-    pub serverity: String,    // The severity of the bug
+    pub reported_by: Uuid,       // The ID of the user that reported the bug.
+    pub fixed_by: Uuid,         // The ID of the user that fixed the bug.
+    pub severity: String,    // The severity of the bug
+    pub is_fixed: bool, // Indicates whether the bug has been fixed or not.
+    pub created_at: String, // Timestamp of when the bug was created
 }
 
 // Define the 'CreateBug' struct to represent the creation of a bug
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize, Debug, FromRow)]
 pub struct CreateBug {
     pub reported_by: String, // The username of the person that reported the bug
     pub title: String,    // The title of the bug
     pub description: String, // The description of the bug
-    pub serverity: String, // The severity of the bug
+    pub severity: String, // The severity of the bug
+    pub project_name: String, // The name of the project that the bug belongs to
+}
+
+
+#[derive(Serialize, Deserialize, Debug, FromRow)]
+pub struct Project {
+    pub id: Uuid,
+    pub project_name: String,
+    pub project_description: String,
+    pub created_at: String, // Timestamp of when the project was created
+    pub user_id: Uuid, // The ID of the user that created the project
 }
 
