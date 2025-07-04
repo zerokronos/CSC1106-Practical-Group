@@ -63,6 +63,12 @@ pub struct ProjectRecord {
 }
 
 #[derive(Serialize, Deserialize, Debug, FromRow)]
+pub struct CreateProject {
+    pub username: String,
+    pub project_title: String,
+    pub project_description: String,
+
+#[derive(Serialize, Deserialize, Debug, FromRow)]
 pub struct BugFilter {
     pub is_fixed: Option<bool>,     
     pub severity: Option<String>,

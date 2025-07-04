@@ -10,7 +10,7 @@ use hex;
 use tera::{Tera, Context};
 
 // Models and authentication functionality needed for user, stock, and transaction handling.
-use crate::models::{User, BugReport, LoginRequest, LoginResponse, CreateBug, ProjectRecord, BugAssignment, SimpleUser, BugFilter, UpdateBugReport};
+use crate::models::{User, BugReport, LoginRequest, LoginResponse, CreateBug, ProjectRecord, BugAssignment, SimpleUser, BugFilter, UpdateBugReport, CreateProject};
 use crate::auth;
 
 // Define a function to configure the service, setting up the routes available in this web application.
@@ -19,8 +19,11 @@ pub fn config(cfg: &mut web::ServiceConfig) {
        .service(
           web::scope("")
                  .wrap(auth::AuthMiddleware)
-                 .service(web::resource("/projects").route(web::get().to(get_projects))) //GET /projects
-                 .service(web::resource("/projects").route(web::post().to(add_project))) //POST /projects
+        .service(
+            web::scope("/projects")
+                .route("", web::get().to(get_projects))
+                .route("", web::post().to(add_project))
+        )  
                  .service(
                       web::scope("/bugs")
                         .route("", web::get().to(get_bugs)) // GET /bugs
@@ -100,16 +103,63 @@ async fn login_function(
 }
 
 // Asynchronous function for handling stock purchase requests.
-async fn get_projects(_pool: web::Data<SqlitePool>, _body: web::Json<BugReport>) -> impl Responder {
-    // Respond with a 200 OK status, indicating the buy request was processed.
-    HttpResponse::Ok().body("Buy request processed")
+// Simply responds to the request with a confirmation message.
+async fn get_projects(_pool: web::Data<SqlitePool>) -> impl Responder {
+    let project = match sqlx::query_as::<_, Project>(
+        "SELECT id, project_name, project_description, created_at, user_id  FROM projectRecords"
+    )
+    .fetch_all(_pool.get_ref())
+    .await
+    {
+        Ok(projects) => projects,
+        Err(e) => {
+            eprintln!("Project query error: {:?}", e);
+            return HttpResponse::InternalServerError().finish();
+        }
+    };
+    HttpResponse::Ok().json(project)
 }
 
 
 // Asynchronous function for handling stock purchase requests.
-async fn add_project(_pool: web::Data<SqlitePool>, _body: web::Json<BugReport>) -> impl Responder {
-    // Respond with a 200 OK status, indicating the buy request was processed.
-    HttpResponse::Ok().body("Buy request processed")
+// Simply responds to the request with a confirmation message.
+async fn add_project(_pool: web::Data<SqlitePool>, _body: web::Json<CreateProject>) -> impl Responder {
+    // Query to get the user by username
+    let user = match sqlx::query_as::<_, User>(
+        "SELECT id, username, hashed_password FROM users WHERE username = ?"
+    )
+    .bind(&_body.username)
+    .fetch_optional(_pool.get_ref())
+    .await {
+        Ok(Some(user)) => user,
+        Ok(None) => return HttpResponse::NotFound().body("User not found"),
+        Err(e) => {
+            eprintln!("User query error: {:?}", e);
+            return HttpResponse::InternalServerError().finish();
+        }
+    };
+
+    // Generate a new UUID for the project
+    let project_id = Uuid::new_v4();
+    let user_id = user.id.clone(); // Get the user's id
+
+    // Insert the new project into the database
+    let project = match sqlx::query(
+        "INSERT INTO projectRecords (id, user_id, project_name, project_description) VALUES (?, ?, ?, ?)"
+    )
+    .bind(&project_id)
+    .bind(&user_id) // Binding user_id from the User struct
+    .bind(&_body.project_title)
+    .bind(&_body.project_description)
+    .execute(_pool.get_ref())
+    .await {
+        Ok(_) => (),
+        Err(e) => {
+            eprintln!("Create project error: {:?}", e);
+            return HttpResponse::InternalServerError().finish();
+        }
+    };
+    HttpResponse::Ok().json(project)
 }
 
 // Asynchronous function for fetching bug reports based on optional filters.
