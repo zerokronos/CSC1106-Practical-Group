@@ -357,6 +357,28 @@ async fn render_bug_form(pool: web::Data<SqlitePool>) -> Result<impl Responder, 
     for user in &users {
                 println!("UserID: {}, Username: {}", user.id, user.username);
             }
+
+    // Create template-friendly data structures with string UUIDs
+    let template_bugs: Vec<serde_json::Value> = open_bugs.iter().map(|bug| {
+        serde_json::json!({
+            "id": bug.id.to_string(),
+            "title": bug.title,
+            "description": bug.description,
+            "severity": bug.severity,
+            "project_id": bug.project_id.to_string(),
+            "reported_by": bug.reported_by.to_string(),
+            "fixed_by": bug.fixed_by.map(|id| id.to_string()),
+            "is_fixed": bug.is_fixed,
+            "created_at": bug.created_at
+        })
+    }).collect();
+
+    let template_users: Vec<serde_json::Value> = users.iter().map(|user| {
+        serde_json::json!({
+            "id": user.id.to_string(),
+            "username": user.username
+        })
+    }).collect();
             
     // Create Tera instance
     let tera = match Tera::new("static/*.html") {
@@ -371,8 +393,8 @@ async fn render_bug_form(pool: web::Data<SqlitePool>) -> Result<impl Responder, 
     };
 
     let mut context = Context::new(); 
-    context.insert("bugs", &open_bugs); 
-    context.insert("users", &users); 
+    context.insert("bugs", &template_bugs); 
+    context.insert("users", &template_users); 
 
     // Render the template
     match tera.render("bugform.html", &context) {
@@ -393,7 +415,7 @@ async fn assign_bug(
     body: web::Json<BugAssignmentRequest>,
     req: HttpRequest
 ) -> Result<impl Responder, AppError> {
-    println!("assign_bug called with bug_id: {}, user_id: {}", body.bug_id, body.user_id);
+    println!("assign_bug called with bug_id: '{}', user_id: '{}'", body.bug_id, body.user_id);
     
     // Check if user is authenticated
     let _authenticated_user_id = match auth::get_authenticated_user_id(&req) {
@@ -407,13 +429,13 @@ async fn assign_bug(
     // Parse string UUIDs from frontend
     let bug_id = Uuid::parse_str(&body.bug_id)
         .map_err(|e| {
-            eprintln!("Invalid bug_id format: {:?}", e);
+            eprintln!("Invalid bug_id format: '{}', error: {:?}", body.bug_id, e);
             AppError::BadRequest(format!("Invalid bug ID format: {}", e))
         })?;
 
     let user_id = Uuid::parse_str(&body.user_id)
         .map_err(|e| {
-            eprintln!("Invalid user_id format: {:?}", e);
+            eprintln!("Invalid user_id format: '{}', error: {:?}", body.user_id, e);
             AppError::BadRequest(format!("Invalid user ID format: {}", e))
         })?;
 
