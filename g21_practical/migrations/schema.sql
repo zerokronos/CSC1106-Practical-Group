@@ -5,8 +5,8 @@ CREATE TABLE users (
     hashed_password TEXT NOT NULL
 );
 
--- Create projectRecords table
-CREATE TABLE projectRecords (
+-- Create projectRecord table
+CREATE TABLE projectRecord (
     id BLOB PRIMARY KEY,
     user_id BLOB NOT NULL,
     project_name TEXT,
@@ -16,7 +16,7 @@ CREATE TABLE projectRecords (
 );
 
 -- Create bugsReports table
-CREATE TABLE bugReports (
+CREATE TABLE bugReport (
     id BLOB PRIMARY KEY,
     title TEXT NOT NULL UNIQUE,
     description TEXT NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE bugReports (
     severity TEXT NOT NULL,
     is_fixed BOOLEAN DEFAULT FALSE,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(project_id) REFERENCES projectRecords(id),
+    FOREIGN KEY(project_id) REFERENCES projectRecord(id),
     FOREIGN KEY(reported_by) REFERENCES users(id),
     FOREIGN KEY(fixed_by) REFERENCES users(id)
 );

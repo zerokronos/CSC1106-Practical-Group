@@ -1,0 +1,40 @@
+1. Test successful login
+curl -X POST http://localhost:8080/login -H "Content-Type: application/json" -d "{\"username\": \"admin\",\"password\": \"admin123\"}"
+
+2. Test failed login (wrong password)
+curl -X POST http://localhost:8080/login -H "Content-Type: application/json" -d "{\"username\": \"admin\",\"password\": \"wrongpassword\"}"
+
+3. Test failed login (user non-existent)
+curl -X POST http://localhost:8080/login -H "Content-Type: application/json" -d "{\"username\": \"nonexistent\",\"password\": \"password123\"}"
+
+4. Test creating bug report with valid token (Replace YOUR_AUTH_TOKEN_HERE with real JWT)
+curl -X POST http://127.0.0.1:8080/bugs/new -H "Content-Type: application/json" -H "Authorization: Bearer YOUR_AUTH_TOKEN_HERE" -d "{\"title\": \"New Bug Title\",\"description\": \"This is a test bug report description.\",\"severity\": \"medium\",\"project_name\": \"Project A\"}"
+
+5. Test creating bug report with no token
+curl -X POST http://127.0.0.1:8080/bugs/new -H "Content-Type: application/json" -d "{\"title\": \"Another Bug\",\"description\": \"This bug should not be created.\",\"severity\": \"low","project_name\": \"Project A\"}"
+
+6. Test creating bug report with invalid token
+curl -X POST http://127.0.0.1:8080/bugs/new -H "Content-Type: application/json" -H "Authorization: Bearer INVALID_TOKEN_HERE" -d "{\"title\": \"Bug with Invalid Token\",\"description\": \"This bug should not be created.\",\"severity\": \"high\",\"project_name\": \"Project A\"}"
+
+curl -X POST http://localhost:8080/login -H "Content-Type: application/json" -d "{\"username\": \"nonexistent\",\"password\": \"password123\"}"
+
+
+8. Test getting all bug reports with optional fields
+curl -i -X GET http://127.0.0.1:8080/bugs
+curl -i "http://localhost:8080/bugs?is_fixed=true"
+curl "http://localhost:8080/bugs?is_fixed=false"
+curl "http://localhost:8080/bugs?severity=high"
+curl "http://localhost:8080/bugs?project_name=Project%20A"
+curl "http://localhost:8080/bugs?is_fixed=false&severity=high&project_name=Project%20A"
+
+ReplaceWithValidBugId (to get bug ID for the next commands)
+curl -i -X GET http://127.0.0.1:8080/bugs
+
+9. Test getting a bug report by ID
+curl http://localhost:8080/bugs/ReplaceWithValidBugId
+
+10. Update a bug report with option fields
+curl -X PATCH http://localhost:8080/bugs/ReplaceWithValidBugId -H "Content-Type: application/json" -d "{\"is_fixed\": true,\"fixed_by\": \"normal_user\",\"description\":\"Bug has been resolved.\",\"severity\":\"low\"}"
+
+
+eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJlMzQ5MzUxZi0wZjVjLTQ4YWItYjFmNS0yYjViMWZjZWFjMDEiLCJleHAiOjE3NTE2MzExOTJ9.imH-OdabIUbBU3YYK1mdJK13G14PnUpHiWEQMSisig4
