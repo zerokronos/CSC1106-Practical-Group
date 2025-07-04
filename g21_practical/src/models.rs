@@ -14,22 +14,29 @@ pub struct User {
     pub hashed_password: String, // Password of the user stored in a hashed form for security.
 }
 
-// Define the `Stock` struct to represent stock information in the application.
-// Like `User`, this struct also derives `Serialize`, `Deserialize`, and `Debug` traits.
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Stock {
-    pub id: Uuid,         // Unique identifier for the stock.
-    pub symbol: String,   // Symbol representing the stock, like "AAPL" for Apple.
-    pub price: f64,       // Current price of the stock.
+#[derive(Deserialize)]
+pub struct Login {
+    pub username: String, // Username of the user
+    pub password: String, // Pasword of the user that key it in
 }
 
-// Define the `Transaction` struct to represent a stock transaction in the application.
-// This struct is also serializable and deserializable, allowing it to be used with various data formats.
+// Define the `BugReport` struct to represent a bug report.
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Transaction {
-    pub id: Uuid,                 // Unique identifier for the transaction.
-    pub user_id: Uuid,            // The ID of the user making the transaction.
-    pub stock_id: Uuid,           // The ID of the stock involved in the transaction.
-    pub quantity: i32,            // The number of stock units involved in the transaction.
-    pub transaction_type: String, // Type of transaction, either "buy" or "sell".
+pub struct BugReport {
+    pub id: Uuid,                 // Unique identifier of the bug.
+    pub reported_by: Uuid,       // The ID of the user that reported the bug.
+    pub fixed_by: Uuid,         // The ID of the user that fixed the bug.
+    pub title: String,          // The title of the bug
+    pub description: String,   // The description of the bug
+    pub serverity: String,    // The severity of the bug
 }
+
+// Define the 'CreateBug' struct to represent the creation of a bug
+#[derive(Deserialize)]
+pub struct CreateBug {
+    pub reported_by: String, // The username of the person that reported the bug
+    pub title: String,    // The title of the bug
+    pub description: String, // The description of the bug
+    pub serverity: String, // The severity of the bug
+}
+
