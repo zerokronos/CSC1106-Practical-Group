@@ -5,31 +5,18 @@
 // `crate::models` and `crate::auth` denote relative imports from the current project's `models` and `auth` modules, respectively.
 use actix_web::{web, HttpResponse, Responder, HttpRequest, Error, Result};
 use sqlx::SqlitePool;
-use uuid::Uuid;
-use bcrypt::{hash, verify, DEFAULT_COST};
 use tera::{Tera, Context};
 
 // Models and authentication functionality needed for user, stock, and transaction handling.
 use crate::models::{User, BugReport, LoginRequest, LoginResponse, CreateBug, ProjectRecord, BugAssignment, SimpleUser};
 use crate::auth;
 
-// For access control middleware
-use actix_web::{
-    dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
-    HttpMessage,
-    http::header,
-    error::ErrorUnauthorized,
-};
-use futures_util::future::LocalBoxFuture;
-use std::future::{ready, Ready};
-use std::rc::Rc;
-
 // Define a function to configure the service, setting up the routes available in this web application.
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(web::resource("/login").route(web::post().to(login_function))) // POST /login
        .service(
           web::scope("")
-                 .wrap(AuthMiddleware)
+                 .wrap(auth::AuthMiddleware)
                  .service(web::resource("/projects").route(web::get().to(get_projects))) //GET /projects
                  .service(web::resource("/projects").route(web::post().to(add_project))) //POST /projects
                  .service(
@@ -43,98 +30,6 @@ pub fn config(cfg: &mut web::ServiceConfig) {
                         .route("/{id}", web::delete().to(delete_bug)) //delete /bugs/{id}
                  )
         );
-}
-
-pub struct AuthMiddleware;
-
-impl<S, B> Transform<S, ServiceRequest> for AuthMiddleware
-where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
-    S::Future: 'static,
-    B: 'static,
-{
-    type Response = ServiceResponse<B>;
-    type Error = Error;
-    type InitError = ();
-    type Transform = AuthMiddlewareMiddleware<S>;
-    type Future = Ready<Result<Self::Transform, Self::InitError>>;
-
-    fn new_transform(&self, service: S) -> Self::Future {
-        ready(Ok(AuthMiddlewareMiddleware {
-            service: Rc::new(service),
-        }))
-    }
-}
-
-pub struct AuthMiddlewareMiddleware<S> {
-    service: Rc<S>,
-}
-
-impl<S, B> Service<ServiceRequest> for AuthMiddlewareMiddleware<S>
-where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
-    S::Future: 'static,
-    B: 'static,
-{
-    type Response = ServiceResponse<B>;
-    type Error = Error;
-    type Future = LocalBoxFuture<'static, Result<Self::Response, Self::Error>>;
-
-    forward_ready!(service);
-
-    fn call(&self, req: ServiceRequest) -> Self::Future {
-        let service = self.service.clone();
-
-        Box::pin(async move {
-            // Extract Authorization header
-            let auth_header = req.headers().get(header::AUTHORIZATION);
-            
-            if let Some(header_value) = auth_header {
-                if let Ok(auth_str) = header_value.to_str() {
-                    if auth_str.starts_with("Bearer ") {
-                        let token = &auth_str[7..];
-                        
-                        // Validate the token and extract user ID
-                        if auth::validate_token(token) {
-                            if let Some(user_id) = auth::extract_user_id_from_token(token) {
-                                // Store user ID in request extensions for use in handlers
-                                req.extensions_mut().insert(user_id);
-                                
-                                // Continue with the request
-                                let fut = service.call(req);
-                                return fut.await;
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // If we reach here, authentication failed
-            Err(ErrorUnauthorized("Authentication required"))
-        })
-    }
-}
-
-// Helper function to extract user ID from request extensions
-pub fn get_user_id_from_request(req: &ServiceRequest) -> Option<Uuid> {
-    req.extensions().get::<Uuid>().copied()
-}
-
-// Helper function for use in handlers
-pub fn get_authenticated_user_id(req: &actix_web::HttpRequest) -> Option<Uuid> {
-    req.extensions().get::<Uuid>().copied()
-}
-
-// Hash password with salt function
-fn hash_with_salt(password: &str, salt: &str) -> Result<String, bcrypt::BcryptError> {
-    let salted_password = format!("{}{}", salt, password);
-    hash(salted_password, DEFAULT_COST)
-}
-
-// Function to verify password with salt
-fn verify_with_salt(password: &str, salt: &str, hash: &str) -> Result<bool, bcrypt::BcryptError> {
-    let salted_password = format!("{}{}", salt, password);
-    verify(salted_password, hash)
 }
 
 // Asynchronous function for user login, expected to receive a JSON payload corresponding to a `User` object.
@@ -154,7 +49,7 @@ async fn login_function(
     match user {
         Ok(Some(user)) => {
             // Verify password
-            match verify_with_salt(&body.password, salt, &user.hashed_password) {
+            match auth::verify_with_salt(&body.password, salt, &user.hashed_password) {
                 Ok(true) => {
                     // Password correct, create token
                     let token = auth::create_token(user.id);
@@ -242,7 +137,7 @@ async fn create_bug(
     _req: HttpRequest
 ) -> impl Responder {
     // Extract user ID from the request extensions
-    let authenticated_user_id = match get_authenticated_user_id(&_req) {
+    let authenticated_user_id = match auth::get_authenticated_user_id(&_req) {
         Some(user_id) => user_id,
         None => return HttpResponse::Unauthorized().json(serde_json::json!({
             "status": "error",

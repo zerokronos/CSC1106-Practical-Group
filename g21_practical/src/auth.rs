@@ -1,10 +1,100 @@
-// Import necessary modules and traits from external crates `jsonwebtoken`, `serde`, `std`, and `uuid`.
-// These are used for JWT creation/validation, serialization/deserialization, environment variable handling, and UUID generation.
+use actix_web::{Error, Result};
 use jsonwebtoken::{encode, decode, Header, Validation, EncodingKey, DecodingKey};
 use serde::{Serialize, Deserialize};
 use std::env;
 use uuid::Uuid;
 use bcrypt::{hash, verify, DEFAULT_COST};
+
+// For access control middleware
+use actix_web::{
+    dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
+    HttpMessage,
+    http::header,
+    error::ErrorUnauthorized,
+};
+use futures_util::future::LocalBoxFuture;
+use std::future::{ready, Ready};
+use std::rc::Rc;
+
+pub struct AuthMiddleware;
+
+impl<S, B> Transform<S, ServiceRequest> for AuthMiddleware
+where
+    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
+    S::Future: 'static,
+    B: 'static,
+{
+    type Response = ServiceResponse<B>;
+    type Error = Error;
+    type InitError = ();
+    type Transform = AuthMiddlewareMiddleware<S>;
+    type Future = Ready<Result<Self::Transform, Self::InitError>>;
+
+    fn new_transform(&self, service: S) -> Self::Future {
+        ready(Ok(AuthMiddlewareMiddleware {
+            service: Rc::new(service),
+        }))
+    }
+}
+
+pub struct AuthMiddlewareMiddleware<S> {
+    service: Rc<S>,
+}
+
+impl<S, B> Service<ServiceRequest> for AuthMiddlewareMiddleware<S>
+where
+    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
+    S::Future: 'static,
+    B: 'static,
+{
+    type Response = ServiceResponse<B>;
+    type Error = Error;
+    type Future = LocalBoxFuture<'static, Result<Self::Response, Self::Error>>;
+
+    forward_ready!(service);
+
+    fn call(&self, req: ServiceRequest) -> Self::Future {
+        let service = self.service.clone();
+
+        Box::pin(async move {
+            // Extract Authorization header
+            let auth_header = req.headers().get(header::AUTHORIZATION);
+            
+            if let Some(header_value) = auth_header {
+                if let Ok(auth_str) = header_value.to_str() {
+                    if auth_str.starts_with("Bearer ") {
+                        let token = &auth_str[7..];
+                        
+                        // Validate the token and extract user ID
+                        if validate_token(token) {
+                            if let Some(user_id) = extract_user_id_from_token(token) {
+                                // Store user ID in request extensions for use in handlers
+                                req.extensions_mut().insert(user_id);
+                                
+                                // Continue with the request
+                                let fut = service.call(req);
+                                return fut.await;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // If we reach here, authentication failed
+            Err(ErrorUnauthorized("Authentication required"))
+        })
+    }
+}
+
+// Helper function to extract user ID from request extensions
+pub fn get_user_id_from_request(req: &ServiceRequest) -> Option<Uuid> {
+    req.extensions().get::<Uuid>().copied()
+}
+
+// Helper function for use in handlers
+pub fn get_authenticated_user_id(req: &actix_web::HttpRequest) -> Option<Uuid> {
+    req.extensions().get::<Uuid>().copied()
+}
 
 // Define a struct called `Claims` that will hold the data to be encoded into the JWT.
 // This struct derives `Serialize` and `Deserialize` traits to facilitate JSON conversion.
