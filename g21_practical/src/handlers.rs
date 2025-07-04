@@ -10,7 +10,7 @@ use hex;
 use tera::{Tera, Context};
 
 // Models and authentication functionality needed for user, stock, and transaction handling.
-use crate::models::{User, BugReport, LoginRequest, LoginResponse, CreateBug, ProjectRecord, BugAssignment, SimpleUser, , BugFilter, UpdateBugReport};
+use crate::models::{User, BugReport, LoginRequest, LoginResponse, CreateBug, ProjectRecord, BugAssignment, SimpleUser, BugFilter, UpdateBugReport};
 use crate::auth;
 
 // Define a function to configure the service, setting up the routes available in this web application.
@@ -266,10 +266,6 @@ async fn create_bug(_pool: web::Data<SqlitePool>, _body: web::Json<CreateBug>,_r
     HttpResponse::Ok().json(response)
 }
 
-
-// Asynchronous function for handling stock purchase requests.
-async fn assign_bug(_pool: web::Data<SqlitePool>, _body: web::Json<BugReport>) -> impl Responder {
-    HttpResponse::Ok().body("Buy request processed")
 
 // Asynchronous function to render the bug assignment form.
 async fn render_bug_form(pool: web::Data<SqlitePool>) -> impl Responder {
