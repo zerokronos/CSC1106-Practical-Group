@@ -15,10 +15,19 @@ pub struct User {
     pub hashed_password: String, // Password of the user stored in a hashed form for security.
 }
 
+// Struct for incoming login requests
 #[derive(Serialize, Deserialize, Debug, FromRow)]
-pub struct Login {
-    pub username: String, // Username of the user
-    pub password: String, // Pasword of the user that key it in
+pub struct LoginRequest {
+    pub username: String,
+    pub password: String,
+}
+
+// Struct for login responses
+#[derive(Serialize)]
+pub struct LoginResponse {
+    pub status: String,
+    pub message: String,
+    pub token: String,
 }
 
 // Define the `BugReport` struct to represent a bug report.
@@ -54,4 +63,3 @@ pub struct Project {
     pub created_at: String, // Timestamp of when the project was created
     pub user_id: Uuid, // The ID of the user that created the project
 }
-

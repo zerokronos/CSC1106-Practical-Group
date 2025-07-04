@@ -6,7 +6,7 @@ CREATE TABLE users (
 );
 
 -- Create projectRecords table
-CREATE TABLE projectRecords (
+CREATE TABLE projectRecord (
     id BLOB PRIMARY KEY,
     user_id BLOB NOT NULL,
     project_name TEXT,
@@ -16,7 +16,7 @@ CREATE TABLE projectRecords (
 );
 
 -- Create bugsReports table
-CREATE TABLE bugReports (
+CREATE TABLE bugReport (
     id BLOB PRIMARY KEY,
     title TEXT NOT NULL UNIQUE,
     description TEXT NOT NULL,

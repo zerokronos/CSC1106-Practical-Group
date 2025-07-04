@@ -44,7 +44,7 @@ pub async fn init_db() -> Pool<Sqlite> {
 
     // Insert a project record
     let project_id = Uuid::new_v4();
-    sqlx::query("INSERT INTO projectRecords (id, user_id, project_name, project_description) VALUES (?, ?, ?, ?)")
+    sqlx::query("INSERT INTO projectRecord (id, user_id, project_name, project_description) VALUES (?, ?, ?, ?)")
         .bind(&project_id.as_bytes()[..])
         .bind(&user_id.as_bytes()[..])
         .bind("Project A")
@@ -55,7 +55,7 @@ pub async fn init_db() -> Pool<Sqlite> {
 
     let bug_id = Uuid::new_v4();
     // Insert a bug report
-    sqlx::query("INSERT INTO bugReports (id, project_id, title, description, reported_by, severity, is_fixed) VALUES (?, ?, ?, ?, ?, ?, ?)")
+    sqlx::query("INSERT INTO bugReport (id, project_id, title, description, reported_by, severity, is_fixed) VALUES (?, ?, ?, ?, ?, ?, ?)")
         .bind(&bug_id.as_bytes()[..])
         .bind(&project_id.as_bytes()[..])
         .bind("BUG in Login Feature")
