@@ -211,11 +211,16 @@ async fn get_bugs(_pool: web::Data<SqlitePool>, _filter: web::Query<BugFilter>) 
 
 // Asynchronous function for getting a bug by its ID in it path.
 async fn get_bug_by_id(_pool: web::Data<SqlitePool>, _bug_id: web::Path<Uuid>) -> impl Responder {
+    let bug_id = _bug_id.into_inner();
+
+    // Convert Uuid to Vec<u8> for matching BLOB field in SQLite
+    let bug_id_bytes = bug_id.as_bytes().to_vec();
+
     match sqlx::query_as::<_, BugReport>(
         "SELECT id, project_id, title, description, reported_by, fixed_by, severity, is_fixed, created_at \
          FROM bugReport WHERE id = ?"
     )
-    .bind(_bug_id.into_inner())
+    .bind(bug_id_bytes)
     .fetch_optional(_pool.get_ref())
     .await {
         Ok(Some(bug)) => HttpResponse::Ok().json(bug),
@@ -487,9 +492,27 @@ query_builder = query_builder.bind(bug_id_bytes);
 }
 
 
-// Asynchronous function for handling stock purchase requests.
-// Simply responds to the request with a confirmation message.
-async fn delete_bug(_pool: web::Data<SqlitePool>, _body: web::Json<BugReport>) -> impl Responder {
-    // Respond with a 200 OK status, indicating the buy request was processed.
-    HttpResponse::Ok().body("Buy request processed")
+async fn delete_bug(_pool: web::Data<SqlitePool>, _bug_id: web::Path<Uuid>) -> impl Responder {
+    let bug_id = _bug_id.into_inner();
+
+    // Convert Uuid to Vec<u8> for matching BLOB field in SQLite
+    let bug_id_bytes = bug_id.as_bytes().to_vec();
+
+    match sqlx::query("DELETE FROM bugReport WHERE id = ?")
+        .bind(bug_id_bytes)
+        .execute(_pool.get_ref())
+        .await
+    {
+        Ok(result) => {
+            if result.rows_affected() == 0 {
+                HttpResponse::NotFound().body("Bug not found")
+            } else {
+                HttpResponse::Ok().body("Bug deleted successfully")
+            }
+        }
+        Err(e) => {
+            eprintln!("Database error: {:?}", e);
+            HttpResponse::InternalServerError().body("Failed to delete bug")
+        }
+    }
 }
