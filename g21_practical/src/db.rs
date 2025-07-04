@@ -5,6 +5,7 @@ use sqlx::sqlite::SqlitePoolOptions;
 use uuid::Uuid;
 use std::fs;
 
+
 // Define an asynchronous function `init_db` that initializes a connection pool to an SQLite database.
 // This function returns a `Pool<Sqlite>` type, which represents a pool of SQLite connections.
 pub async fn init_db() -> Pool<Sqlite> {
