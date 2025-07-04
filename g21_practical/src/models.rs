@@ -18,12 +18,11 @@ pub struct User {
 // Struct for incoming login requests
 #[derive(Serialize, Deserialize, Debug, FromRow)]
 pub struct LoginRequest {
-    pub username: String,
-    pub password: String,
+    pub username: String, // Username of the user
+    pub password: String, // Pasword of the user that key it in
 }
 
-// Struct for login responses
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Debug, FromRow)]
 pub struct LoginResponse {
     pub status: String,
     pub message: String,
@@ -38,7 +37,7 @@ pub struct BugReport {
     pub title: String,          // The title of the bug
     pub description: String,   // The description of the bug
     pub reported_by: Uuid,       // The ID of the user that reported the bug.
-    pub fixed_by: Option<Uuid>,         // The ID of the user that fixed the bug.
+    pub fixed_by: Option<Uuid>,       // The ID of the user that fixed the bug.
     pub severity: String,    // The severity of the bug
     pub is_fixed: bool, // Indicates whether the bug has been fixed or not.
     pub created_at: String, // Timestamp of when the bug was created
@@ -47,7 +46,6 @@ pub struct BugReport {
 // Define the 'CreateBug' struct to represent the creation of a bug
 #[derive(Serialize, Deserialize, Debug, FromRow)]
 pub struct CreateBug {
-    pub reported_by: String, // The username of the person that reported the bug
     pub title: String,    // The title of the bug
     pub description: String, // The description of the bug
     pub severity: String, // The severity of the bug
@@ -77,4 +75,17 @@ pub struct UpdateBugReport {
     pub severity: Option<String>,
     pub description: Option<String>,
     pub fixed_by: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct BugAssignment { 
+    pub bug_id: Uuid, // The ID of the bug being assigned
+    pub user_id: Uuid, // The ID of the user to whom the bug is assigned
+}
+
+// Simple user struct for dropdowns (no password needed)
+#[derive(Serialize, Deserialize, Debug, FromRow)]
+pub struct SimpleUser {
+    pub id: Uuid,
+    pub username: String,
 }
