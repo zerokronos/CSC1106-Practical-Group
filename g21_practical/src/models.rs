@@ -16,9 +16,16 @@ pub struct User {
 }
 
 #[derive(Serialize, Deserialize, Debug, FromRow)]
-pub struct Login {
+pub struct LoginRequest {
     pub username: String, // Username of the user
     pub password: String, // Pasword of the user that key it in
+}
+
+#[derive(Serialize, Deserialize, Debug, FromRow)]
+pub struct LoginResponse {
+    pub status: String,
+    pub message: String,
+    pub token: Option<String>,
 }
 
 // Define the `BugReport` struct to represent a bug report.

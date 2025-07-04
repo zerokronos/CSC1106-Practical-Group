@@ -6,9 +6,10 @@
 use actix_web::{web, HttpResponse, Responder};
 use sqlx::SqlitePool;
 use uuid::Uuid;
+use bcrypt::{hash, verify, DEFAULT_COST};
 
 // Models and authentication functionality needed for user, stock, and transaction handling.
-use crate::models::{User, BugReport, CreateBug, Project};
+use crate::models::{User, LoginRequest, LoginResponse, BugReport, CreateBug, Project};
 use crate::auth;
 
 // Define a function to configure the service, setting up the routes available in this web application.
@@ -27,19 +28,80 @@ pub fn config(cfg: &mut web::ServiceConfig) {
        );
 }
 
+// Hash password with salt function
+fn hash_with_salt(password: &str, salt: &str) -> Result<String, bcrypt::BcryptError> {
+    let salted_password = format!("{}{}", salt, password);
+    hash(salted_password, DEFAULT_COST)
+}
+
+// Function to verify password with salt
+fn verify_with_salt(password: &str, salt: &str, hash: &str) -> Result<bool, bcrypt::BcryptError> {
+    let salted_password = format!("{}{}", salt, password);
+    verify(salted_password, hash)
+}
 
 // Asynchronous function for user login, expected to receive a JSON payload corresponding to a `User` object.
 // Returns a responder, encapsulating an HTTP response.
-async fn login_function(pool: web::Data<SqlitePool>, body: web::Json<User>) -> impl Responder {
-    // Simulate login logic. Typically you would verify user credentials against the database.
-    if body.username == "admin" {
-        // If the username matches "admin", a new token is created using your auth logic.
-        let token = auth::create_token(Uuid::new_v4());
-        // Respond with a 200 OK status and include the token as JSON.
-        HttpResponse::Ok().json(serde_json::json!({ "token": token }))
-    } else {
-        // If authentication fails, respond with a 401 Unauthorized status.
-        HttpResponse::Unauthorized().finish()
+async fn login_function(
+    pool: web::Data<SqlitePool>, 
+    body: web::Json<LoginRequest>
+) -> impl Responder {
+    let salt = "bugtrack2025";
+    let user = sqlx::query_as::<_, User>(
+             "SELECT id, username, hashed_password FROM users WHERE username = ?",
+        )
+        .bind(&body.username)
+        .fetch_optional(pool.get_ref())
+        .await;
+
+    match user {
+        Ok(Some(user)) => {
+            // Verify password
+            match verify_with_salt(&body.password, salt, &user.hashed_password) {
+                Ok(true) => {
+                    // Password correct, create token
+                    let token = auth::create_token(Uuid::new_v4());
+
+                    HttpResponse::Ok().json(LoginResponse {
+                        status: "success".to_string(),
+                        message: "Login successful".to_string(),
+                        token: Some(token),
+                    })
+                }
+                Ok(false) => {
+                    // Password incorrect
+                    HttpResponse::Unauthorized().json(LoginResponse {
+                        status: "failure".to_string(),
+                        message: "Invalid credentials".to_string(),
+                        token: None,
+                    })
+                }
+                Err(_) => {
+                    // Error verifying password
+                    HttpResponse::InternalServerError().json(LoginResponse {
+                        status: "failure".to_string(),
+                        message: "Internal server error".to_string(),
+                        token: None,
+                    })
+                }  
+            }
+        }
+        Ok(None) => {
+            // User not found
+            HttpResponse::Unauthorized().json(LoginResponse {
+                status: "failure".to_string(),
+                message: "Invalid credentials".to_string(),
+                token: None,
+            })
+        }
+        Err(_) => {
+            // Database error
+            HttpResponse::InternalServerError().json(LoginResponse {
+                status: "failure".to_string(),
+                message: "Database error".to_string(),
+                token: None,
+            })
+        }
     }
 }
 
