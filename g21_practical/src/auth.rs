@@ -4,6 +4,7 @@ use jsonwebtoken::{encode, decode, Header, Validation, EncodingKey, DecodingKey}
 use serde::{Serialize, Deserialize};
 use std::env;
 use uuid::Uuid;
+use bcrypt::{hash, verify, DEFAULT_COST};
 
 // Define a struct called `Claims` that will hold the data to be encoded into the JWT.
 // This struct derives `Serialize` and `Deserialize` traits to facilitate JSON conversion.

@@ -7,8 +7,10 @@ use actix_web::{web, HttpResponse, Responder, HttpRequest, Error, Result};
 use sqlx::SqlitePool;
 use uuid::Uuid;
 use bcrypt::{hash, verify, DEFAULT_COST};
+use tera::{Tera, Context};
+
 // Models and authentication functionality needed for user, stock, and transaction handling.
-use crate::models::{User, LoginRequest, LoginResponse, BugReport, CreateBug, Project};
+use crate::models::{User, BugReport, LoginRequest, LoginResponse, CreateBug, ProjectRecord, BugAssignment, SimpleUser};
 use crate::auth;
 
 // For access control middleware
@@ -26,20 +28,21 @@ use std::rc::Rc;
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(web::resource("/login").route(web::post().to(login_function))) // POST /login
        .service(
-    web::scope("")
-                .wrap(AuthMiddleware)
-                .service(web::resource("/projects").route(web::get().to(get_projects))) //GET /projects
-                .service(web::resource("/projects").route(web::post().to(add_project))) //POST /projects
-                .service(
-                        web::scope("/bugs")
-                            .route("", web::get().to(get_bugs)) // GET /bugs
-                            .route("/{id}", web::get().to(get_bug_by_id)) // GET /bugs/{id}
-                            .route("/new", web::post().to(create_bug)) // POST /bugs/new
-                            .route("/assign", web::post().to(assign_bug)) // POST /bugs/assign
-                            .route("/{id}", web::patch().to(update_bug_details)) // PATCH /bugs/{id}
-                            .route("/{id}", web::delete().to(delete_bug)) //delete /bugs/{id}
-       )
-    );
+          web::scope("")
+                 .wrap(AuthMiddleware)
+                 .service(web::resource("/projects").route(web::get().to(get_projects))) //GET /projects
+                 .service(web::resource("/projects").route(web::post().to(add_project))) //POST /projects
+                 .service(
+                      web::scope("/bugs")
+                        .route("", web::get().to(get_bugs)) // GET /bugs
+                        .route("/assign", web::get().to(render_bug_form)) // GET /bugs/assign
+                        .route("/assign", web::post().to(assign_bug)) // POST /bugs/assign
+                        .route("/{id}", web::get().to(get_bug_by_id)) // GET /bugs/{id}
+                        .route("/new", web::post().to(create_bug)) // POST /bugs/new
+                        .route("/{id}", web::patch().to(update_bug_details)) // PATCH /bugs/{id}
+                        .route("/{id}", web::delete().to(delete_bug)) //delete /bugs/{id}
+                 )
+        );
 }
 
 pub struct AuthMiddleware;
@@ -267,7 +270,7 @@ async fn create_bug(
             }));
         }
     };
-
+  
     // Get project by name
     let project = match sqlx::query_as::<_, ProjectRecord>(
         "SELECT id, project_name, project_description, created_at, user_id FROM projectRecord WHERE project_name = ?"
@@ -317,7 +320,7 @@ async fn create_bug(
         description: _body.description.clone(),
         reported_by: user.id,
         severity: _body.severity.clone(),
-        fixed_by: uuid::Uuid::nil(), // Initially set to nil, as the bug is not fixed yet
+        fixed_by: None, // Initially set to nil, as the bug is not fixed yet
         created_at: chrono::Utc::now().to_rfc3339(), // Current timestamp in RFC 3339 format
         is_fixed: false,
     };
@@ -326,11 +329,86 @@ async fn create_bug(
 }
 
 
-// Asynchronous function for handling stock purchase requests.
-// Simply responds to the request with a confirmation message.
-async fn assign_bug(_pool: web::Data<SqlitePool>, _body: web::Json<BugReport>) -> impl Responder {
-    // Respond with a 200 OK status, indicating the buy request was processed.
-    HttpResponse::Ok().body("Buy request processed")
+// Asynchronous function to render the bug assignment form.
+async fn render_bug_form(pool: web::Data<SqlitePool>) -> impl Responder {
+    println!("render_bug_form called");
+    
+    // Fetch open bugs
+    let open_bugs = sqlx::query_as::<_, BugReport>(
+        "SELECT * FROM bugReport WHERE is_fixed = false"
+    )
+    .fetch_all(pool.get_ref())
+    .await;
+
+    // Fetch all users
+    let users = sqlx::query_as::<_, SimpleUser>(
+        "SELECT id, username FROM users"
+    )
+    .fetch_all(pool.get_ref())
+    .await;
+
+    println!("Bugs result: {:?}", open_bugs.is_ok());
+    println!("Users result: {:?}", users.is_ok());
+
+    match (open_bugs, users) {
+        (Ok(bugs), Ok(user_list)) => {
+            println!("Found {} bugs and {} users", bugs.len(), user_list.len());
+            
+            // Create Tera instance
+            let tera = match Tera::new("static/*.html") {
+                Ok(t) => {
+                    println!("Tera instance created successfully");
+                    t
+                },
+                Err(e) => {
+                    eprintln!("Tera parsing error: {}", e);
+                    return HttpResponse::InternalServerError().body("Template parsing error");
+                }
+            };
+
+            let mut context = Context::new();
+            context.insert("bugs", &bugs);
+            context.insert("users", &user_list);
+
+            // Render the template
+            match tera.render("bugform.html", &context) {
+                Ok(rendered) => {
+                    println!("Template rendered successfully");
+                    HttpResponse::Ok().content_type("text/html").body(rendered)
+                },
+                Err(e) => {
+                    eprintln!("Template rendering error: {}", e);
+                    HttpResponse::InternalServerError().body("Failed to render template")
+                }
+            }
+        }
+        (Err(e), _) => {
+            eprintln!("Error fetching bugs from database: {:?}", e);
+            HttpResponse::InternalServerError().body("Database error fetching bugs")
+        }
+        (_, Err(e)) => {
+            eprintln!("Error fetching users from database: {:?}", e);
+            HttpResponse::InternalServerError().body("Database error fetching users")
+        }
+    }
+}
+
+async fn assign_bug(pool: web::Data<SqlitePool>, body: web::Json<BugAssignment>) -> impl Responder {
+    let result = sqlx::query(
+        "UPDATE bugReport SET fixed_by = ? WHERE id = ?"
+    )
+    .bind(&body.user_id.as_bytes()[..])
+    .bind(&body.bug_id.as_bytes()[..])
+    .execute(pool.get_ref())
+    .await;
+
+    match result {
+        Ok(_) => HttpResponse::Ok().body("Bug assigned successfully"),
+        Err(e) => {
+            eprintln!("Bug assignment error: {:?}", e);
+            HttpResponse::InternalServerError().body("Failed to assign bug")
+        }
+    }
 }
 
 

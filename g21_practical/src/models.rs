@@ -15,6 +15,7 @@ pub struct User {
     pub hashed_password: String, // Password of the user stored in a hashed form for security.
 }
 
+// Struct for incoming login requests
 #[derive(Serialize, Deserialize, Debug, FromRow)]
 pub struct LoginRequest {
     pub username: String, // Username of the user
@@ -36,7 +37,7 @@ pub struct BugReport {
     pub title: String,          // The title of the bug
     pub description: String,   // The description of the bug
     pub reported_by: Uuid,       // The ID of the user that reported the bug.
-    pub fixed_by: Uuid,         // The ID of the user that fixed the bug.
+    pub fixed_by: Option<Uuid>,   // The ID of the user that fixed the bug.
     pub severity: String,    // The severity of the bug
     pub is_fixed: bool, // Indicates whether the bug has been fixed or not.
     pub created_at: String, // Timestamp of when the bug was created
@@ -53,7 +54,7 @@ pub struct CreateBug {
 
 
 #[derive(Serialize, Deserialize, Debug, FromRow)]
-pub struct Project {
+pub struct ProjectRecord {
     pub id: Uuid,
     pub project_name: String,
     pub project_description: String,
@@ -61,3 +62,15 @@ pub struct Project {
     pub user_id: Uuid, // The ID of the user that created the project
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct BugAssignment { 
+    pub bug_id: Uuid, // The ID of the bug being assigned
+    pub user_id: Uuid, // The ID of the user to whom the bug is assigned
+}
+
+// Simple user struct for dropdowns (no password needed)
+#[derive(Serialize, Deserialize, Debug, FromRow)]
+pub struct SimpleUser {
+    pub id: Uuid,
+    pub username: String,
+}
