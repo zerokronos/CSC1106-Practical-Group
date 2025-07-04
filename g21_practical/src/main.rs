@@ -12,6 +12,7 @@ mod handlers; // Handles HTTP request routing and response.
 mod models;   // Defines data structures used across the application.
 mod auth;     // Handles authentication logic and utilities.
 mod db;       // Contains database initialization and interaction functions.
+mod error;    // Handles error-handling.
 
 // The `main` function is the application's entry point, running within the `actix_web` runtime.
 // It returns a `Result` that can indicate I/O operations' success or failure.

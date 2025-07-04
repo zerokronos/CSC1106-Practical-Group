@@ -18,3 +18,4 @@ chrono = { version = "0.4", features = ["serde"] }
 hex = "0.4"
 tera = "1.19"
 futures-util = "0.3.31"
+derive_more = "0.99"
