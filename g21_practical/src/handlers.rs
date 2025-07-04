@@ -8,8 +8,9 @@ use sqlx::SqlitePool;
 use uuid::Uuid;
 use hex;
 use tera::{Tera, Context};
+use serde_json;
 
-use crate::models::{User, BugReport, LoginRequest, LoginResponse, CreateBug, ProjectRecord, BugAssignment, SimpleUser, BugFilter, UpdateBugReport, CreateProject};
+use crate::models::{User, BugReport, LoginRequest, LoginResponse, CreateBug, ProjectRecord, BugAssignment, BugAssignmentRequest, SimpleUser, BugFilter, UpdateBugReport, CreateProject};
 use crate::auth;
 use crate::error::AppError;
 
@@ -386,23 +387,105 @@ async fn render_bug_form(pool: web::Data<SqlitePool>) -> Result<impl Responder, 
     }
 }
 
-// Error handling not yet placed
-async fn assign_bug(pool: web::Data<SqlitePool>, body: web::Json<BugAssignment>) -> impl Responder {
+// Function to assign a bug to a user (requires authentication)
+async fn assign_bug(
+    pool: web::Data<SqlitePool>, 
+    body: web::Json<BugAssignmentRequest>,
+    req: HttpRequest
+) -> Result<impl Responder, AppError> {
+    println!("assign_bug called with bug_id: {}, user_id: {}", body.bug_id, body.user_id);
+    
+    // Check if user is authenticated
+    let _authenticated_user_id = match auth::get_authenticated_user_id(&req) {
+        Some(user_id) => user_id,
+        None => return Ok(HttpResponse::Unauthorized().json(serde_json::json!({
+            "status": "error",
+            "message": "Authentication required"
+        })))
+    };
+
+    // Parse string UUIDs from frontend
+    let bug_id = Uuid::parse_str(&body.bug_id)
+        .map_err(|e| {
+            eprintln!("Invalid bug_id format: {:?}", e);
+            AppError::BadRequest(format!("Invalid bug ID format: {}", e))
+        })?;
+
+    let user_id = Uuid::parse_str(&body.user_id)
+        .map_err(|e| {
+            eprintln!("Invalid user_id format: {:?}", e);
+            AppError::BadRequest(format!("Invalid user ID format: {}", e))
+        })?;
+
+    // Convert UUIDs to bytes for SQLite
+    let bug_id_bytes = bug_id.as_bytes().to_vec();
+    let user_id_bytes = user_id.as_bytes().to_vec();
+
+    println!("Bug ID bytes: {:?}", hex::encode(&bug_id_bytes));
+    println!("User ID bytes: {:?}", hex::encode(&user_id_bytes));
+
+    // First, check if the bug exists
+    let bug_exists = sqlx::query("SELECT id FROM bugReport WHERE id = ?")
+        .bind(&bug_id_bytes)
+        .fetch_optional(pool.get_ref())
+        .await
+        .map_err(|e| {
+            eprintln!("Error checking bug existence: {:?}", e);
+            AppError::Database(e.into())
+        })?;
+
+    if bug_exists.is_none() {
+        println!("Bug not found in database");
+        return Ok(HttpResponse::NotFound().json(serde_json::json!({
+            "status": "error",
+            "message": "Bug not found"
+        })));
+    }
+
+    // Check if the user exists
+    let user_exists = sqlx::query("SELECT id FROM users WHERE id = ?")
+        .bind(&user_id_bytes)
+        .fetch_optional(pool.get_ref())
+        .await
+        .map_err(|e| {
+            eprintln!("Error checking user existence: {:?}", e);
+            AppError::Database(e.into())
+        })?;
+
+    if user_exists.is_none() {
+        println!("User not found in database");
+        return Ok(HttpResponse::NotFound().json(serde_json::json!({
+            "status": "error",
+            "message": "User not found"
+        })));
+    }
+
+    // Now update the bug assignment
     let result = sqlx::query(
         "UPDATE bugReport SET fixed_by = ? WHERE id = ?"
     )
-    .bind(&body.user_id.as_bytes()[..])
-    .bind(&body.bug_id.as_bytes()[..])
+    .bind(&user_id_bytes)
+    .bind(&bug_id_bytes)
     .execute(pool.get_ref())
-    .await;
+    .await
+    .map_err(|e| {
+        eprintln!("Bug assignment error: {:?}", e);
+        AppError::Database(e.into())
+    })?;
 
-    match result {
-        Ok(_) => HttpResponse::Ok().body("Bug assigned successfully"),
-        Err(e) => {
-            eprintln!("Bug assignment error: {:?}", e);
-            HttpResponse::InternalServerError().body("Failed to assign bug")
-        }
+    println!("Rows affected: {}", result.rows_affected());
+
+    if result.rows_affected() == 0 {
+        return Ok(HttpResponse::NotFound().json(serde_json::json!({
+            "status": "error",
+            "message": "Bug assignment failed - no rows updated"
+        })));
     }
+
+    Ok(HttpResponse::Ok().json(serde_json::json!({
+        "status": "success",
+        "message": "Bug assigned successfully"
+    })))
 }
 
 

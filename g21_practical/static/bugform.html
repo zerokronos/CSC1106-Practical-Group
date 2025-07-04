@@ -144,6 +144,87 @@
         .option-placeholder {
             color: #999;
         }
+
+        .login-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+        }
+
+        .login-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .login-input {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .login-btn {
+            padding: 12px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .login-btn:hover {
+            background: #218838;
+        }
+
+        .status-text {
+            text-align: center;
+            font-weight: 500;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .authenticated {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .not-authenticated {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .assignment-section {
+            display: none;
+        }
+
+        .assignment-section.visible {
+            display: block;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+        }
     </style>
 </head>
 <body>
@@ -151,32 +232,50 @@
         <h1 class="form-title">🐛 Assign Bug to Developer</h1>
         
         <div id="alert" class="alert"></div>
-        
-        <form id="assignmentForm">
-            <div class="form-group">
-                <label for="bugSelect">Select Bug:</label>
-                <select id="bugSelect" name="bug_id" required>
-                    <option value="">Select a bug...</option>
-                    {% for bug in bugs %}
-                    <option value="{{ bug.id }}">{{ bug.title }} ({{ bug.severity }})</option>
-                    {% endfor %}
-                </select>
-            </div>
 
-            <div class="form-group">
-                <label for="userSelect">Assign to Developer:</label>
-                <select id="userSelect" name="user_id" required>
-                    <option value="">Select a developer...</option>
-                    {% for user in users %}
-                    <option value="{{ user.id }}">{{ user.username }}</option>
-                    {% endfor %}
-                </select>
+        <!-- Authentication Section -->
+        <div class="login-section">
+            <div id="loginForm" style="display: none;">
+                <h2>🔐 Please Login to Continue</h2>
+                <div class="login-form">
+                    <input type="text" id="loginUsername" class="login-input" placeholder="Username" required>
+                    <input type="password" id="loginPassword" class="login-input" placeholder="Password" required>
+                    <button onclick="performLogin()" class="login-btn">Login</button>
+                </div>
+                
             </div>
+            
+            <div id="authStatus" class="status-text"></div>
+        </div>
 
-            <button type="submit" class="submit-btn" id="submitBtn">
-                Assign Bug
-            </button>
-        </form>
+        <!-- Assignment Form Section -->
+        <div id="assignmentSection" class="assignment-section">
+            <form id="assignmentForm">
+                <div class="form-group">
+                    <label for="bugSelect">Select Bug:</label>
+                    <select id="bugSelect" name="bug_id" required>
+                        <option value="">Select a bug...</option>
+                        {% for bug in bugs %}
+                        <option value="{{ bug.id }}">{{ bug.title }} ({{ bug.severity }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="userSelect">Assign to Developer:</label>
+                    <select id="userSelect" name="user_id" required>
+                        <option value="">Select a developer...</option>
+                        {% for user in users %}
+                        <option value="{{ user.id }}">{{ user.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    Assign Bug
+                </button>
+            </form>
+        </div>
 
         <div class="loading" id="loading">
             <p>Processing assignment...</p>
@@ -184,9 +283,97 @@
     </div>
 
     <script>
+        // Check authentication status on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthStatus();
+        });
+
+        // Check if user is authenticated
+        function checkAuthStatus() {
+            const token = localStorage.getItem('authToken');
+            const username = localStorage.getItem('username');
+            
+            const loginForm = document.getElementById('loginForm');
+            const authStatus = document.getElementById('authStatus');
+            const assignmentSection = document.getElementById('assignmentSection');
+            
+            if (token && username) {
+                // User is authenticated
+                loginForm.style.display = 'none';
+                authStatus.innerHTML = `✅ Logged in as: ${username} <button onclick="logout()" class="logout-btn">Logout</button>`;
+                authStatus.className = 'status-text authenticated';
+                assignmentSection.classList.add('visible');
+            } else {
+                // User is not authenticated
+                loginForm.style.display = 'block';
+                authStatus.innerHTML = '❌ You must be logged in to assign bugs';
+                authStatus.className = 'status-text not-authenticated';
+                assignmentSection.classList.remove('visible');
+            }
+        }
+
+        // Perform login
+        async function performLogin() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!username || !password) {
+                showAlert('Please enter both username and password.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Store the token and username
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('username', username);
+                    
+                    showAlert('Login successful! 🎉', 'success');
+                    
+                    // Clear login form
+                    document.getElementById('loginUsername').value = '';
+                    document.getElementById('loginPassword').value = '';
+                    
+                    // Update auth status
+                    checkAuthStatus();
+                } else {
+                    const errorText = await response.text();
+                    showAlert(`Login failed: ${errorText}`, 'error');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showAlert('Network error during login. Please try again.', 'error');
+            }
+        }
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('username');
+            showAlert('Logged out successfully!', 'success');
+            checkAuthStatus();
+        }
+
         // Handle form submission
         document.getElementById('assignmentForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            // Check if user is authenticated
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                showAlert('Please log in first to assign bugs.', 'error');
+                return;
+            }
             
             const formData = new FormData(this);
             const assignmentData = {
@@ -213,13 +400,19 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` // Include authentication token
                     },
                     body: JSON.stringify(assignmentData)
                 });
 
                 if (response.ok) {
+                    const result = await response.json();
                     showAlert('Bug assigned successfully! 🎉', 'success');
                     this.reset();
+                } else if (response.status === 401) {
+                    // Token expired or invalid
+                    showAlert('Authentication expired. Please log in again.', 'error');
+                    logout();
                 } else {
                     const errorText = await response.text();
                     showAlert(`Error: ${errorText}`, 'error');
@@ -232,6 +425,13 @@
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Assign Bug';
                 loading.style.display = 'none';
+            }
+        });
+
+        // Allow login on Enter key press
+        document.getElementById('loginPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performLogin();
             }
         });
 
@@ -250,3 +450,5 @@
     </script>
 </body>
 </html>
+
+
