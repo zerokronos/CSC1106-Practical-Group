@@ -13,28 +13,31 @@ use tera::{Tera, Context};
 use crate::models::{User, BugReport, LoginRequest, LoginResponse, CreateBug, ProjectRecord, BugAssignment, SimpleUser, BugFilter, UpdateBugReport, CreateProject};
 use crate::auth;
 
-// Define a function to configure the service, setting up the routes available in this web application.
+// Function to configure the service, setting up the routes available in this web application.
 pub fn config(cfg: &mut web::ServiceConfig) {
-    cfg.service(web::resource("/login").route(web::post().to(login_function))) // POST /login
+    // Public routes (no authentication middleware applied)
+    cfg.service(web::resource("/login").route(web::post().to(login_function))) // User login (public)
+       .service(web::resource("/projects").route(web::get().to(get_projects))) // GET /projects (public)
        .service(
-          web::scope("")
-                 .wrap(auth::AuthMiddleware)
-        .service(
-            web::scope("/projects")
-                .route("", web::get().to(get_projects))
-                .route("", web::post().to(add_project))
-        )  
-                 .service(
-                      web::scope("/bugs")
-                        .route("", web::get().to(get_bugs)) // GET /bugs
-                        .route("/assign", web::get().to(render_bug_form)) // GET /bugs/assign
-                        .route("/assign", web::post().to(assign_bug)) // POST /bugs/assign
-                        .route("/{id}", web::get().to(get_bug_by_id)) // GET /bugs/{id}
-                        .route("/new", web::post().to(create_bug)) // POST /bugs/new
-                        .route("/{id}", web::patch().to(update_bug_details)) // PATCH /bugs/{id}
-                        .route("/{id}", web::delete().to(delete_bug)) //delete /bugs/{id}
-                 )
-        );
+           web::scope("/bugs") // Public GET routes for bugs
+               .route("", web::get().to(get_bugs)) // GET /bugs (public)
+               .route("/assign", web::get().to(render_bug_form)) // GET /bugs/assign (public)
+               .route("/{id}", web::get().to(get_bug_by_id)) // GET /bugs/{id} (public)
+       );
+
+    // Authenticated routes (authentication middleware applied)
+    cfg.service(
+        web::scope("") // This scope wraps all routes that require authentication
+            .wrap(auth::AuthMiddleware) // Apply the AuthMiddleware here
+            .service(web::resource("/projects").route(web::post().to(add_project))) // POST /projects (authenticated)
+            .service(
+                web::scope("/bugs") // Authenticated routes for bugs
+                    .route("/assign", web::post().to(assign_bug)) // POST /bugs/assign (authenticated)
+                    .route("/new", web::post().to(create_bug)) // POST /bugs/new (authenticated)
+                    .route("/{id}", web::patch().to(update_bug_details)) // PATCH /bugs/{id} (authenticated)
+                    .route("/{id}", web::delete().to(delete_bug)) // DELETE /bugs/{id} (authenticated)
+            )
+    );
 }
 
 // Asynchronous function for user login, expected to receive a JSON payload corresponding to a `User` object.
@@ -105,7 +108,7 @@ async fn login_function(
 // Asynchronous function for handling stock purchase requests.
 // Simply responds to the request with a confirmation message.
 async fn get_projects(_pool: web::Data<SqlitePool>) -> impl Responder {
-    let project = match sqlx::query_as::<_, Project>(
+    let project = match sqlx::query_as::<_, ProjectRecord>(
         "SELECT id, project_name, project_description, created_at, user_id  FROM projectRecords"
     )
     .fetch_all(_pool.get_ref())

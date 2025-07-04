@@ -67,6 +67,7 @@ pub struct CreateProject {
     pub username: String,
     pub project_title: String,
     pub project_description: String,
+}
 
 #[derive(Serialize, Deserialize, Debug, FromRow)]
 pub struct BugFilter {
