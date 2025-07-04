@@ -15,27 +15,44 @@ use crate::auth;
 
 // Function to configure the service, setting up the routes available in this web application.
 pub fn config(cfg: &mut web::ServiceConfig) {
-    // Public routes (no authentication middleware applied)
-    cfg.service(web::resource("/login").route(web::post().to(login_function))) // User login (public)
-       .service(web::resource("/projects").route(web::get().to(get_projects))) // GET /projects (public)
-       .service(
-           web::scope("/bugs") // Public GET routes for bugs
-               .route("", web::get().to(get_bugs)) // GET /bugs (public)
-               .route("/assign", web::get().to(render_bug_form)) // GET /bugs/assign (public)
-               .route("/{id}", web::get().to(get_bug_by_id)) // GET /bugs/{id} (public)
-       );
+    // The login route is a standalone public endpoint
+    cfg.service(web::resource("/login").route(web::post().to(login_function)));
 
-    // Authenticated routes (authentication middleware applied)
+    // Configure all /projects routes within a single scope
     cfg.service(
-        web::scope("") // This scope wraps all routes that require authentication
-            .wrap(auth::AuthMiddleware) // Apply the AuthMiddleware here
-            .service(web::resource("/projects").route(web::post().to(add_project))) // POST /projects (authenticated)
+        web::scope("/projects")
+            // Public GET /projects
+            .route("", web::get().to(get_projects))
+            // Authenticated POST /projects (add_project)
+            // This nested service ensures only the POST method for /projects is authenticated
             .service(
-                web::scope("/bugs") // Authenticated routes for bugs
-                    .route("/assign", web::post().to(assign_bug)) // POST /bugs/assign (authenticated)
-                    .route("/new", web::post().to(create_bug)) // POST /bugs/new (authenticated)
-                    .route("/{id}", web::patch().to(update_bug_details)) // PATCH /bugs/{id} (authenticated)
-                    .route("/{id}", web::delete().to(delete_bug)) // DELETE /bugs/{id} (authenticated)
+                web::resource("") // Relative path to /projects, so it matches /projects
+                    .wrap(auth::AuthMiddleware) // Apply middleware only to this resource
+                    .route(web::post().to(add_project))
+            )
+    );
+
+    // Configure all /bugs routes within a single top-level scope
+    cfg.service(
+        web::scope("/bugs")
+            // Public GET routes for /bugs
+            .route("", web::get().to(get_bugs))
+            .route("/assign", web::get().to(render_bug_form))
+            .route("/{id}", web::get().to(get_bug_by_id))
+
+            // Nested scope for authenticated /bugs operations (POST, PATCH, DELETE)
+            // This inner scope inherits the "/bugs" prefix from its parent.
+            .service(
+                web::scope("") // This effectively means "/bugs/*"
+                    .wrap(auth::AuthMiddleware) // Apply AuthMiddleware to all routes within this nested scope
+                    // Authenticated POST /bugs/assign
+                    .route("/assign", web::post().to(assign_bug))
+                    // Authenticated POST /bugs/new
+                    .route("/new", web::post().to(create_bug))
+                    // Authenticated PATCH /bugs/{id}
+                    .route("/{id}", web::patch().to(update_bug_details))
+                    // Authenticated DELETE /bugs/{id}
+                    .route("/{id}", web::delete().to(delete_bug))
             )
     );
 }
@@ -109,7 +126,7 @@ async fn login_function(
 // Simply responds to the request with a confirmation message.
 async fn get_projects(_pool: web::Data<SqlitePool>) -> impl Responder {
     let project = match sqlx::query_as::<_, ProjectRecord>(
-        "SELECT id, project_name, project_description, created_at, user_id  FROM projectRecords"
+        "SELECT id, project_name, project_description, created_at, user_id  FROM projectRecord"
     )
     .fetch_all(_pool.get_ref())
     .await
@@ -148,7 +165,7 @@ async fn add_project(_pool: web::Data<SqlitePool>, _body: web::Json<CreateProjec
 
     // Insert the new project into the database
     let project = match sqlx::query(
-        "INSERT INTO projectRecords (id, user_id, project_name, project_description) VALUES (?, ?, ?, ?)"
+        "INSERT INTO projectRecord (id, user_id, project_name, project_description) VALUES (?, ?, ?, ?)"
     )
     .bind(&project_id)
     .bind(&user_id) // Binding user_id from the User struct

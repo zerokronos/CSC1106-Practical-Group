@@ -16,9 +16,7 @@ curl -X POST http://127.0.0.1:8080/bugs/new -H "Content-Type: application/json" 
 6. Test creating bug report with invalid token
 curl -X POST http://127.0.0.1:8080/bugs/new -H "Content-Type: application/json" -H "Authorization: Bearer INVALID_TOKEN_HERE" -d "{\"title\": \"Bug with Invalid Token\",\"description\": \"This bug should not be created.\",\"severity\": \"high\",\"project_name\": \"Project A\"}"
 
-curl -X POST http://localhost:8080/login -H "Content-Type: application/json" -d "{\"username\": \"nonexistent\",\"password\": \"password123\"}"
-
-8. Test getting all bug reports with optional fields
+7. Test getting all bug reports with optional fields
 curl -i -X GET http://127.0.0.1:8080/bugs -H "Authorization: Bearer YOUR_AUTH_TOKEN_HERE"
 curl -i "http://localhost:8080/bugs?is_fixed=true" -H "Authorization: Bearer YOUR_AUTH_TOKEN_HERE"
 curl -i "http://localhost:8080/bugs?is_fixed=false" -H "Authorization: Bearer YOUR_AUTH_TOKEN_HERE"
@@ -29,13 +27,11 @@ curl -i "http://localhost:8080/bugs?is_fixed=false&severity=high&project_name=Pr
 ReplaceWithValidBugId (to get bug ID for the next commands)
 curl -i -X GET http://127.0.0.1:8080/bugs
 
-9. Test getting a bug report by ID
+8. Test getting a bug report by ID
 curl -i http://localhost:8080/bugs/ReplaceWithValidBugId -H "Authorization: Bearer YOUR_AUTH_TOKEN_HERE"
 
-10. Update a bug report with option fields
+9. Update a bug report with option fields
 curl -i -X PATCH http://localhost:8080/bugs/ReplaceWithValidBugId -H "Content-Type: application/json" -H "Authorization: Bearer YOUR_AUTH_TOKEN_HERE" -d "{\"is_fixed\": true,\"fixed_by\": \"normal_user\",\"description\":\"Bug has been resolved.\",\"severity\":\"low\"}"
 
-11. Delete a bug report
+10. Delete a bug report
 curl -X DELETE http://localhost:8080/bugs/ReplaceWithValidBugId -H "Authorization: Bearer YOUR_AUTH_TOKEN_HERE"
-
-eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIwMTc0ZWZiNy00NjEyLTQ4MGYtYjdiYy1mMTNlMjJmOGE1M2UiLCJleHAiOjE3NTE2MzgzNjV9.lp0onfAJ5y89LEHwGXLry3GpwuHrvZlzQsXu1GII5CY
