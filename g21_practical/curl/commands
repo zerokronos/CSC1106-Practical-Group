@@ -1,43 +1,46 @@
 1. Test successful login
 curl -X POST http://localhost:8080/login -H "Content-Type: application/json" -d "{\"username\": \"admin\",\"password\": \"admin123\"}"
 
-2. Test failed login (wrong password)
+1.2. Test failed login (wrong password)
 curl -X POST http://localhost:8080/login -H "Content-Type: application/json" -d "{\"username\": \"admin\",\"password\": \"wrongpassword\"}"
 
-3. Test failed login (user non-existent)
+1.3. Test failed login (user non-existent)
 curl -X POST http://localhost:8080/login -H "Content-Type: application/json" -d "{\"username\": \"nonexistent\",\"password\": \"password123\"}"
 
-4. Test creating bug report with valid token (Replace YOUR_AUTH_TOKEN_HERE with real JWT)
+2.1 Test creating bug report with valid token (Replace YOUR_AUTH_TOKEN_HERE with real JWT)
 curl -X POST http://127.0.0.1:8080/bugs/new -H "Content-Type: application/json" -H "Authorization: Bearer YOUR_AUTH_TOKEN_HERE" -d "{\"title\": \"New Bug Title\",\"description\": \"This is a test bug report description.\",\"severity\": \"medium\",\"project_name\": \"Project A\"}"
 
-5. Test creating bug report with no token
+2.2 Test creating bug report with no token
 curl -X POST http://127.0.0.1:8080/bugs/new -H "Content-Type: application/json" -d "{\"title\": \"Another Bug\",\"description\": \"This bug should not be created.\",\"severity\": \"low","project_name\": \"Project A\"}"
 
-6. Test creating bug report with invalid token
+2.3 Test creating bug report with invalid token
 curl -X POST http://127.0.0.1:8080/bugs/new -H "Content-Type: application/json" -H "Authorization: Bearer INVALID_TOKEN_HERE" -d "{\"title\": \"Bug with Invalid Token\",\"description\": \"This bug should not be created.\",\"severity\": \"high\",\"project_name\": \"Project A\"}"
 
-7. Test getting all bug reports with optional fields
-curl -i -X GET http://127.0.0.1:8080/bugs -H "Authorization: Bearer YOUR_AUTH_TOKEN_HERE"
-curl -i "http://localhost:8080/bugs?is_fixed=true" -H "Authorization: Bearer YOUR_AUTH_TOKEN_HERE"
-curl -i "http://localhost:8080/bugs?is_fixed=false" -H "Authorization: Bearer YOUR_AUTH_TOKEN_HERE"
-curl -i "http://localhost:8080/bugs?severity=high" -H "Authorization: Bearer YOUR_AUTH_TOKEN_HERE"
-curl -i "http://localhost:8080/bugs?project_name=Project%20A" -H "Authorization: Bearer YOUR_AUTH_TOKEN_HERE"
-curl -i "http://localhost:8080/bugs?is_fixed=false&severity=high&project_name=Project%20A" -H "Authorization: Bearer YOUR_AUTH_TOKEN_HERE"
+3. Test getting all BugReport with optional fields to filter results
+curl -i -X GET http://127.0.0.1:8080/bugs 
+curl -i "http://localhost:8080/bugs?is_fixed=true"
+curl -i "http://localhost:8080/bugs?is_fixed=false" 
+curl -i "http://localhost:8080/bugs?severity=high" 
+curl -i "http://localhost:8080/bugs?project_name=Project%20A" //%20 is URL encoding for space
+curl -i "http://localhost:8080/bugs?is_fixed=false&severity=high&project_name=Project%20A" //Multiple query parameters
 
-ReplaceWithValidBugId (to get bug ID for the next commands)
-curl -i -X GET http://127.0.0.1:8080/bugs
+4. Test getting a single BugReport by its ID
+curl -i http://localhost:8080/bugs/REPLACEWITHVALIDBUGID 
 
-8. Test getting a bug report by ID
-curl -i http://localhost:8080/bugs/ReplaceWithValidBugId -H "Authorization: Bearer YOUR_AUTH_TOKEN_HERE"
+5. Update a bug report with optional fields
+curl -i -X PATCH http://localhost:8080/bugs/REPLACEWITHVALIDBUGID -H "Content-Type: application/json" -H "Authorization: Bearer YOUR_AUTH_TOKEN_HERE" -d "{\"is_fixed\": true,\"fixed_by\": \"normal_user\",\"description\":\"Bug has been resolved.\",\"severity\":\"low\"}"
 
-9. Update a bug report with option fields
-curl -i -X PATCH http://localhost:8080/bugs/ReplaceWithValidBugId -H "Content-Type: application/json" -H "Authorization: Bearer YOUR_AUTH_TOKEN_HERE" -d "{\"is_fixed\": true,\"fixed_by\": \"normal_user\",\"description\":\"Bug has been resolved.\",\"severity\":\"low\"}"
+6. Delete a bug report
+curl -X DELETE http://localhost:8080/bugs/REPLACEWITHVALIDBUGID -H "Authorization: Bearer YOUR_AUTH_TOKEN_HERE"
 
-10. Delete a bug report
-curl -X DELETE http://localhost:8080/bugs/ReplaceWithValidBugId -H "Authorization: Bearer YOUR_AUTH_TOKEN_HERE"
-
-11. Get html page to assign bug to developer
+7. Get html page to assign bug to developer
 curl -X GET http://localhost:8080/bugs/assign"
 
-12. Assign a bug to a developer
+8. Assign a bug to a developer
 curl -X POST http://localhost:8080/bugs/assign -H " YOUR_AUTH_TOKEN_HERE" -H "Content-Type: application/json" -d "{\"bug_id\": \"YOUR_BUG_ID_HERE\", \"user_id\": \"YOUR_USER_ID_HERE\"}"
+
+9. Create a new project
+curl -i -X POST http://localhost:8080/projects -H "Content-Type: application/json" -H "Authorization: Bearer YOUR_AUTH_TOKEN_HERE " -d "{\"username\": \"admin\", \"project_title\": \"My New Project\", \"project_description\": \"This is a description of my new project.\"}"
+
+10. GET all projects
+curl -i -X GET http://localhost:8080/projects
