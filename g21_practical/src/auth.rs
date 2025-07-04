@@ -51,6 +51,19 @@ pub fn validate_token(token: &str) -> bool {
     .is_ok() // Check if the decoding operation was successful.
 }
 
+// Function to extract user ID from a valid JWT token
+pub fn extract_user_id_from_token(token: &str) -> Option<Uuid> {
+    // Decode the token
+    let token_data = decode::<Claims>(
+        token,
+        &DecodingKey::from_secret(b"secretkey"),
+        &Validation::default(),
+    ).ok()?;
+
+    // Parse the subject (user ID) from the claims
+    Uuid::parse_str(&token_data.claims.sub).ok()
+}
+
 // Hash password with salt
 pub fn hash_with_salt(password: &str, salt: &str) -> Result<String, bcrypt::BcryptError> {
     let salted_password = format!("{}{}", salt, password);

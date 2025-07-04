@@ -6,3 +6,14 @@ curl -X POST http://localhost:8080/login -H "Content-Type: application/json" -d 
 
 3. Test failed login (user non-existent)
 curl -X POST http://localhost:8080/login -H "Content-Type: application/json" -d "{\"username\": \"nonexistent\",\"password\": \"password123\"}"
+
+4. Test creating bug report with valid token (Replace YOUR_AUTH_TOKEN_HERE with real JWT)
+curl -X POST http://127.0.0.1:8080/bugs/new -H "Content-Type: application/json" -H "Authorization: Bearer YOUR_AUTH_TOKEN_HERE" -d "{\"title\": \"New Bug Title\",\"description\": \"This is a test bug report description.\",\"severity\": \"medium\",\"project_name\": \"Project A\"}"
+
+5. Test creating bug report with no token
+curl -X POST http://127.0.0.1:8080/bugs/new -H "Content-Type: application/json" -d "{\"title\": \"Another Bug\",\"description\": \"This bug should not be created.\",\"severity\": \"low","project_name\": \"Project A\"}"
+
+6. Test creating bug report with invalid token
+curl -X POST http://127.0.0.1:8080/bugs/new -H "Content-Type: application/json" -H "Authorization: Bearer INVALID_TOKEN_HERE" -d "{\"title\": \"Bug with Invalid Token\",\"description\": \"This bug should not be created.\",\"severity\": \"high\",\"project_name\": \"Project A\"}"
+
+curl -X POST http://localhost:8080/login -H "Content-Type: application/json" -d "{\"username\": \"nonexistent\",\"password\": \"password123\"}"
