@@ -55,3 +55,9 @@ pub struct Project {
     pub user_id: Uuid, // The ID of the user that created the project
 }
 
+#[derive(Serialize, Deserialize, Debug, FromRow)]
+pub struct CreateProject {
+    pub username: String,
+    pub project_title: String,
+    pub project_description: String,
+}
