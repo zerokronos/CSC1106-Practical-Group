@@ -52,15 +52,20 @@ the database implemented in Rust as well as a frontend using Tera template with 
     
 -Error Handling
 
+-CRUD
 
 ## API Routes
 **POST** `/login` - login as a user
 **GET** `/projets` - Get all projects as JSON
-**POST** `/projects` - Add a new project (Admin Access required)
-**GET** `/bugs/assign` - Renders the Tera HTML template
-**POST** `/bugs/assign` - Update the fixed by field
-**POST** `/bugs/new` - Creat a new BugReport 
+**POST** `/projects` - Add a new project (require Authentication)
+
+## FrontEnd API Routes
+**GET** `/bugs/assign` - Renders the field in Tera HTML template
+**POST** `/bugs/assign` - Update the fixed by field(require Authentication)
+
+## CRUD API for BugReport
+**POST** `/bugs/new` - Create a new BugReport (Admin Access required)
 **GET** `/bugs` - List all BugReport's as a JSON
 **GET** `/bugs/:id` - Retrive a specific BugReport by bug_id as JSON
-**PATCH** `/bugs/:id` - Update BugReport details via JSON with optional fields (such as status, assigned developer, severity, description), returns updated record
-**DELETE** `/bugs/:id` - Delete a BugReport by bug_id
+**PATCH** `/bugs/:id` - Update BugReport details via JSON with optional fields, returns updated record 
+**DELETE** `/bugs/:id` - Delete a BugReport by bug_id (require Authentication)
