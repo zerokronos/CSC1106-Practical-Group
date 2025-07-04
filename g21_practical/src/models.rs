@@ -45,7 +45,6 @@ pub struct BugReport {
 // Define the 'CreateBug' struct to represent the creation of a bug
 #[derive(Serialize, Deserialize, Debug, FromRow)]
 pub struct CreateBug {
-    pub reported_by: String, // The username of the person that reported the bug
     pub title: String,    // The title of the bug
     pub description: String, // The description of the bug
     pub severity: String, // The severity of the bug
