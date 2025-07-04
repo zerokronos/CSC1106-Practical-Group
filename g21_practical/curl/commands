@@ -35,3 +35,9 @@ curl -i -X PATCH http://localhost:8080/bugs/ReplaceWithValidBugId -H "Content-Ty
 
 10. Delete a bug report
 curl -X DELETE http://localhost:8080/bugs/ReplaceWithValidBugId -H "Authorization: Bearer YOUR_AUTH_TOKEN_HERE"
+
+11. Get html page to assign bug to developer
+curl -X GET http://localhost:8080/bugs/assign"
+
+12. Assign a bug to a developer
+curl -X POST http://localhost:8080/bugs/assign -H " YOUR_AUTH_TOKEN_HERE" -H "Content-Type: application/json" -d "{\"bug_id\": \"YOUR_BUG_ID_HERE\", \"user_id\": \"YOUR_USER_ID_HERE\"}"

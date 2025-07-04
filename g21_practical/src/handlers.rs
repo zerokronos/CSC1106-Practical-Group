@@ -366,6 +366,14 @@ async fn render_bug_form(pool: web::Data<SqlitePool>) -> impl Responder {
     match (open_bugs, users) {
         (Ok(bugs), Ok(user_list)) => {
             println!("Found {} bugs and {} users", bugs.len(), user_list.len());
+
+            //For testing purposes
+            for bug in &bugs {
+                println!("Bug ID: {}, Title: {}", bug.id, bug.title);
+            }
+            for user in &user_list {
+                println!("UserID: {}, Username: {}", user.id, user.username);
+            }
             
             // Create Tera instance
             let tera = match Tera::new("static/*.html") {
